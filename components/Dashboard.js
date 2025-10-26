@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
+import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useCart } from '../context/CartContext.js';
 import ProductCard from './ProductCard.js';
@@ -29,74 +30,100 @@ function Dashboard() {
     const bestSellerStyles = new Set(['A039', 'A042', 'F074', 'SB06', 'TS09', 'BR08', 'CR17', 'A032']);
 
     React.useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [itemsData, stockData] = await Promise.all([fetchItems(), fetchStock()]);
-
-                const stockMap = stockData.reduce((acc, item) => {
-                    if (!item || !item['item name'] || typeof item.color === 'undefined' || typeof item.size === 'undefined') {
-                        return acc;
-                    }
-                    const key = `${item['item name']}-${item.color}-${item.size}`;
-                    acc[key] = item.quantity;
+        const processAndSetData = (itemsData, stockData) => {
+            const stockMap = stockData.reduce((acc, item) => {
+                if (!item || !item['item name'] || typeof item.color === 'undefined' || typeof item.size === 'undefined') {
                     return acc;
-                }, {});
-                setStock(stockMap);
+                }
+                const key = `${item['item name']}-${item.color}-${item.size}`;
+                acc[key] = item.quantity;
+                return acc;
+            }, {});
 
-                const allCategories = [...new Set(itemsData.map(item => item && item["Cat'ry"]).filter(Boolean))];
-                setCategories(['all', ...allCategories.sort()]);
-
-                const productsMap = itemsData.reduce((acc, item) => {
-                    if (!item || !item.Style) {
-                        return acc;
-                    }
-                    const style = item.Style;
-                    if (!acc[style]) {
-                        acc[style] = {
-                            style: style,
-                            baseMrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
-                            category: item["Cat'ry"],
-                            variants: [],
-                            colors: new Set()
-                        };
-                    }
-                    
-                    const color = String(item.Color || '').trim();
-                    acc[style].variants.push({
-                        description: item.Description,
-                        color: color,
-                        size: item.Size,
-                        mrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
-                        barcode: item.Barcode
-                    });
-                    acc[style].colors.add(color);
-                    return acc;
-                }, {});
-
-                const productsArray = Object.values(productsMap).map(p => ({ ...p, colors: Array.from(p.colors) }));
+            const productsMap = itemsData.reduce((acc, item) => {
+                if (!item || !item.Style) return acc;
                 
-                const sortedProducts = productsArray.sort((a, b) => {
-                    const aIsBest = bestSellerStyles.has(a.style);
-                    const bIsBest = bestSellerStyles.has(b.style);
-                    if (aIsBest && !bIsBest) return -1;
-                    if (!aIsBest && bIsBest) return 1;
-                    return a.style.localeCompare(b.style);
-                });
-                setProducts(sortedProducts);
+                const style = item.Style;
+                if (!acc[style]) {
+                    acc[style] = {
+                        style: style,
+                        baseMrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
+                        category: item["Cat'ry"],
+                        variants: [],
+                        colors: new Map()
+                    };
+                }
+                
+                const colorCode = String(item.Color || '').trim();
+                const colorName = String(item['Color Name'] || colorCode).trim();
 
+                acc[style].variants.push({
+                    description: item.Description,
+                    color: colorCode,
+                    colorName: colorName,
+                    size: item.Size,
+                    mrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
+                    barcode: item.Barcode
+                });
+
+                if (!acc[style].colors.has(colorCode)) {
+                    acc[style].colors.set(colorCode, { code: colorCode, name: colorName });
+                }
+                return acc;
+            }, {});
+
+            const productsArray = Object.values(productsMap).map(p => ({ ...p, colors: Array.from(p.colors.values()) }));
+            
+            const sortedProducts = productsArray.sort((a, b) => {
+                const aIsBest = bestSellerStyles.has(a.style);
+                const bIsBest = bestSellerStyles.has(b.style);
+                if (aIsBest && !bIsBest) return -1;
+                if (!aIsBest && bIsBest) return 1;
+                return a.style.localeCompare(b.style);
+            });
+
+            const allCategories = [...new Set(itemsData.map(item => item && item["Cat'ry"]).filter(Boolean))];
+            
+            setProducts(sortedProducts);
+            setStock(stockMap);
+            setCategories(['all', ...allCategories.sort()]);
+        };
+
+        const loadInitialData = async () => {
+            setLoading(true);
+            let cachedItems = null;
+            let cachedStock = null;
+            try {
+                [cachedItems, cachedStock] = await Promise.all([loadDataFromDB('products'), loadDataFromDB('stock')]);
+                
+                if (cachedItems && cachedStock) {
+                    processAndSetData(cachedItems, cachedStock);
+                    setLoading(false);
+                }
+
+                const [itemsData, stockData] = await Promise.all([fetchItems(), fetchStock()]);
+                
+                const hasChanges = JSON.stringify(cachedItems) !== JSON.stringify(itemsData) ||
+                                   JSON.stringify(cachedStock) !== JSON.stringify(stockData);
+                
+                if (hasChanges) {
+                    processAndSetData(itemsData, stockData);
+                    await Promise.all([saveData('products', itemsData), saveData('stock', stockData)]);
+                }
             } catch (error) {
                 console.error("Failed to load data:", error);
             } finally {
-                setLoading(false);
+                if (loading) setLoading(false);
             }
         };
-        loadData();
+
+        loadInitialData();
     }, []);
 
     const filteredProducts = products.filter(p => {
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
         const matchesSearch = p.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              p.colors.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()));
+                              p.colors.some(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
 

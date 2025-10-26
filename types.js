@@ -44,13 +44,26 @@ export const colorMap = {
     'PFPGCO': 'url("https://www.enamor.co.in/cdn/shop/files/5_bec821e4-f5ba-4c0c-a013-6048a8ae8005.jpg?v=1709016265")50% 60% /  500% no-repeat',
 };
 
-export const getStyleForColor = (colorName) => {
-    const colorValue = colorMap[colorName.toUpperCase().trim()];
+export const getStyleForColor = (colorCode) => {
+    const upperCaseCode = colorCode.toUpperCase().trim();
+    const colorValue = colorMap[upperCaseCode];
+
     if (!colorValue) {
-        return { backgroundColor: '#E5E7EB', color: '#4B5563', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+        return { 
+            style: { 
+                backgroundColor: '#E5E7EB', 
+                color: '#4B5563',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+            }, 
+            isDefault: true 
+        };
     }
-    if (colorValue.startsWith('url') || colorValue.startsWith('linear-gradient')) {
-        return { background: colorValue };
-    }
-    return { backgroundColor: colorValue };
+    
+    const style = (colorValue.startsWith('url') || colorValue.startsWith('linear-gradient'))
+        ? { background: colorValue }
+        : { backgroundColor: colorValue };
+    
+    return { style, isDefault: false };
 };

@@ -17,13 +17,14 @@ function ProductCard({ product, onSelect, isBestSeller }) {
             React.createElement('p', { className: 'text-sm text-gray-500' }, `₹${product.baseMrp.toFixed(2)}`)
         ),
         product.colors.length > 0 && React.createElement('div', { className: 'flex items-center p-2 bg-gray-50 border-t' },
-            displayedColors.map(color =>
-                React.createElement('div', {
-                    key: color,
-                    className: 'h-5 w-5 rounded-full border-2 border-white shadow-sm -ml-1',
-                    style: getStyleForColor(color)
-                })
-            )
+            displayedColors.map(color => {
+                const { style, isDefault } = getStyleForColor(color.code);
+                return React.createElement('div', {
+                    key: color.code,
+                    className: 'h-5 w-5 rounded-full border-2 border-white shadow-sm -ml-1 text-[8px] font-bold',
+                    style: style
+                }, isDefault ? color.code.substring(0, 3) : null);
+            })
         )
     );
 }

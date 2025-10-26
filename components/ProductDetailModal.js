@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -16,7 +17,7 @@ function ProductDetailModal({ product, stock, onClose }) {
 
     const handleAddToCart = () => {
         let itemsAdded = 0;
-        const variantsForColor = product.variants.filter(v => v.color === selectedColor);
+        const variantsForColor = product.variants.filter(v => v.color === selectedColor.code);
 
         variantsForColor.forEach(variant => {
             const quantity = quantities[variant.barcode];
@@ -42,26 +43,27 @@ function ProductDetailModal({ product, stock, onClose }) {
         }
     };
 
-    const variantsForColor = product.variants.filter(v => v.color === selectedColor);
+    const variantsForColor = product.variants.filter(v => v.color === selectedColor.code);
 
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'p-4 border-b' },
                 React.createElement('h2', { className: 'text-2xl font-bold text-gray-900' }, product.style),
                 React.createElement('div', { className: 'flex items-center space-x-2 mt-2' },
-                    product.colors.map(color =>
-                        React.createElement('button', {
-                            key: color,
+                    product.colors.map(color => {
+                        const { style, isDefault } = getStyleForColor(color.code);
+                        return React.createElement('button', {
+                            key: color.code,
                             onClick: () => setSelectedColor(color),
-                            className: `h-8 w-8 rounded-full border-2 ${selectedColor === color ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-200'}`,
-                            style: getStyleForColor(color)
-                        })
-                    )
+                            className: `h-8 w-8 rounded-full border-2 text-[10px] font-bold ${selectedColor.code === color.code ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-200'}`,
+                            style: style,
+                        }, isDefault ? color.code.substring(0, 3) : null);
+                    })
                 )
             ),
             React.createElement('div', { className: 'flex-grow overflow-y-auto p-4' },
                 React.createElement('div', { className: 'text-gray-800' },
-                    React.createElement('p', { className: 'font-semibold' }, `Color: ${selectedColor}`),
+                    React.createElement('p', { className: 'font-semibold' }, `Color: ${selectedColor.name}`),
                     React.createElement('p', { className: 'text-xs text-gray-500 mt-1' }, '*Stock levels are an estimate. You may order more than the available quantity.')
                 ),
                 React.createElement('table', { className: 'w-full mt-4 text-sm text-left text-gray-800' },
