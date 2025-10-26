@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
 import { useAuth } from '../context/AuthContext.js';
+import { useCart } from '../context/CartContext.js';
 import ProductCard from './ProductCard.js';
 import ProductDetailModal from './ProductDetailModal.js';
 import CartSidebar from './CartSidebar.js';
@@ -9,6 +11,7 @@ import OrderSuccessModal from './OrderSuccessModal.js';
 
 function Dashboard() {
     const { user, logout } = useAuth();
+    const { cartItems } = useCart();
     const [products, setProducts] = React.useState([]);
     const [stock, setStock] = React.useState({});
     const [loading, setLoading] = React.useState(true);
@@ -19,6 +22,8 @@ function Dashboard() {
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
     const [successfulOrder, setSuccessfulOrder] = React.useState(null);
+    const [categories, setCategories] = React.useState([]);
+    const [selectedCategory, setSelectedCategory] = React.useState('all');
     const itemsPerPage = 20;
 
     const bestSellerStyles = new Set(['A039', 'A042', 'F074', 'SB06', 'TS09', 'BR08', 'CR17', 'A032']);
@@ -38,6 +43,9 @@ function Dashboard() {
                 }, {});
                 setStock(stockMap);
 
+                const allCategories = [...new Set(itemsData.map(item => item && item["Cat'ry"]).filter(Boolean))];
+                setCategories(['all', ...allCategories.sort()]);
+
                 const productsMap = itemsData.reduce((acc, item) => {
                     if (!item || !item.Style) {
                         return acc;
@@ -46,7 +54,8 @@ function Dashboard() {
                     if (!acc[style]) {
                         acc[style] = {
                             style: style,
-                            baseMrp: parseFloat(String(item.MRP || 0).trim()),
+                            baseMrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
+                            category: item["Cat'ry"],
                             variants: [],
                             colors: new Set()
                         };
@@ -57,7 +66,7 @@ function Dashboard() {
                         description: item.Description,
                         color: color,
                         size: item.Size,
-                        mrp: parseFloat(String(item.MRP || 0).trim()),
+                        mrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
                         barcode: item.Barcode
                     });
                     acc[style].colors.add(color);
@@ -65,7 +74,16 @@ function Dashboard() {
                 }, {});
 
                 const productsArray = Object.values(productsMap).map(p => ({ ...p, colors: Array.from(p.colors) }));
-                setProducts(productsArray);
+                
+                const sortedProducts = productsArray.sort((a, b) => {
+                    const aIsBest = bestSellerStyles.has(a.style);
+                    const bIsBest = bestSellerStyles.has(b.style);
+                    if (aIsBest && !bIsBest) return -1;
+                    if (!aIsBest && bIsBest) return 1;
+                    return a.style.localeCompare(b.style);
+                });
+                setProducts(sortedProducts);
+
             } catch (error) {
                 console.error("Failed to load data:", error);
             } finally {
@@ -75,36 +93,48 @@ function Dashboard() {
         loadData();
     }, []);
 
-    const filteredProducts = products.filter(p =>
-        p.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.colors.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredProducts = products.filter(p => {
+        const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+        const matchesSearch = p.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              p.colors.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()));
+        return matchesCategory && matchesSearch;
+    });
 
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const totalCartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const UserIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }));
     const CartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' }));
     
+    const searchInput = React.createElement('input', {
+        type: 'text',
+        placeholder: 'Search by style or color...',
+        className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500',
+        value: searchTerm,
+        onChange: e => { setSearchTerm(e.target.value); setCurrentPage(1); }
+    });
+
+    const categoryFilter = React.createElement('select', {
+        value: selectedCategory,
+        onChange: e => { setSelectedCategory(e.target.value); setCurrentPage(1); },
+        className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white'
+    }, categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat === 'all' ? 'All Categories' : cat)));
+
     return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-        React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center' },
+        React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-30' },
             React.createElement('div', { className: 'flex items-center space-x-2' },
                 React.createElement('div', { className: 'flex items-center justify-center w-10 h-10 bg-pink-600 rounded-full' },
                     React.createElement('span', { className: 'text-xl font-bold text-white' }, 'KA')
                 ),
                 React.createElement('h1', { className: 'text-xl font-bold text-gray-800' }, 'Kambeshwar Agencies')
             ),
-            React.createElement('div', { className: 'flex-1 mx-4 max-w-lg' },
-                React.createElement('input', {
-                    type: 'text',
-                    placeholder: 'Search by style or color...',
-                    className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500',
-                    value: searchTerm,
-                    onChange: e => { setSearchTerm(e.target.value); setCurrentPage(1); }
-                })
-            ),
+            React.createElement('div', { className: 'hidden md:flex flex-1 mx-4 max-w-lg' }, searchInput),
             React.createElement('div', { className: 'flex items-center space-x-4' },
-                React.createElement('button', { onClick: () => setCartOpen(true), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(CartIcon)),
+                React.createElement('div', { className: 'relative' },
+                    React.createElement('button', { onClick: () => setCartOpen(true), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(CartIcon)),
+                    totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center' }, totalCartQuantity)
+                ),
                 React.createElement('div', { className: 'relative' },
                     React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(UserIcon)),
                     userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20' },
@@ -114,7 +144,17 @@ function Dashboard() {
                 )
             )
         ),
+        
+        React.createElement('div', { className: 'md:hidden p-4 bg-gray-100 border-b space-y-4' },
+            searchInput,
+            categoryFilter
+        ),
+
         React.createElement('main', { className: 'p-4 md:p-8' },
+            React.createElement('div', { className: 'hidden md:flex mb-6 items-center' },
+                 React.createElement('label', { className: 'text-sm font-medium text-gray-700 mr-2' }, 'Filter by category:'),
+                categoryFilter
+            ),
             loading ?
                 React.createElement('div', { className: 'flex justify-center items-center h-64' },
                     React.createElement('div', { className: 'spinner h-12 w-12 border-4 border-pink-500 border-t-transparent rounded-full' })
