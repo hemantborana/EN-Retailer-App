@@ -52,3 +52,14 @@ export const fetchOrders = async (retailerId) => {
     }
     return [];
 };
+
+export const fetchProductFeatures = async () => {
+    const dataRef = ref(database, 'productFeatures');
+    const snapshot = await get(dataRef);
+    return snapshot.exists() ? snapshot.val() : {};
+};
+
+export const saveProductFeature = async (style, features) => {
+    const featureRef = ref(database, `productFeatures/${style}`);
+    await set(featureRef, features);
+};
