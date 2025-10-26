@@ -53,3 +53,17 @@ export const fetchOrders = async (retailerId) => {
     }
     return [];
 };
+
+export const getGeminiUsage = async (userId) => {
+    const usageRef = ref(database, `hbgosample/geminiUsage/${userId}`);
+    const snapshot = await get(usageRef);
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return { date: '', count: 0 };
+};
+
+export const setGeminiUsage = async (userId, usageData) => {
+    const usageRef = ref(database, `hbgosample/geminiUsage/${userId}`);
+    await set(usageRef, usageData);
+};

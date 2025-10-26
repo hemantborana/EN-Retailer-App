@@ -1,9 +1,31 @@
+
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAuth } from '../context/AuthContext.js';
+import { generateOrderSummary } from '../services/geminiService.js';
 
 function OrderSuccessModal({ order, onClose }) {
     if (!order) return null;
+    
+    const { user } = useAuth();
+    const [aiSummary, setAiSummary] = React.useState('');
+    const [isSummaryLoading, setIsSummaryLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        if (order && user) {
+            const fetchSummary = async () => {
+                setIsSummaryLoading(true);
+                const summary = await generateOrderSummary(order, user.id);
+                setAiSummary(summary || '');
+                setIsSummaryLoading(false);
+            };
+            fetchSummary();
+        } else {
+            setIsSummaryLoading(false);
+        }
+    }, [order, user]);
+
 
     const generatePdf = () => {
         const doc = new jsPDF();
@@ -52,6 +74,19 @@ function OrderSuccessModal({ order, onClose }) {
         // Save PDF
         doc.save(`order_${order.id.slice(-6)}.pdf`);
     };
+
+    const renderAiSummary = () => {
+        if (isSummaryLoading) {
+            return React.createElement('div', { className: 'text-sm text-gray-500 animate-pulse text-left mt-4' }, 'Generating AI summary...');
+        }
+        if (aiSummary) {
+            return React.createElement('div', {className: 'text-left mt-4'}, 
+                React.createElement('p', {className: 'font-semibold text-gray-700 mb-1'}, 'AI Summary:'),
+                React.createElement('p', { className: 'text-sm text-gray-600 bg-gray-100 p-3 rounded-md' }, aiSummary)
+            );
+        }
+        return null;
+    };
     
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg text-center p-6', onClick: e => e.stopPropagation() },
@@ -62,7 +97,8 @@ function OrderSuccessModal({ order, onClose }) {
             ),
             React.createElement('h3', { className: 'text-lg leading-6 font-medium text-gray-900 mt-4' }, 'Order Placed Successfully!'),
             React.createElement('div', { className: 'mt-2 px-7 py-3' },
-                React.createElement('p', { className: 'text-sm text-gray-500' }, `Your order with ID ${order.id.slice(-6)} has been placed.`)
+                React.createElement('p', { className: 'text-sm text-gray-500' }, `Your order with ID ${order.id.slice(-6)} has been placed.`),
+                renderAiSummary()
             ),
             React.createElement('div', { className: 'items-center px-4 py-3 space-y-2 sm:space-y-0 sm:flex sm:space-x-2 justify-center' },
                 React.createElement('button', {
