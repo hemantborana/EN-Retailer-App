@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
 import { saveOrder } from '../services/firebaseService.js';
 
-function CartSidebar({ isOpen, onClose }) {
+function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
     const { cartItems, updateQuantity, clearCart } = useCart();
     const { user } = useAuth();
     const { showToast } = useToast();
@@ -28,8 +28,8 @@ function CartSidebar({ isOpen, onClose }) {
         };
 
         try {
-            await saveOrder(order);
-            showToast('Order placed successfully!');
+            const orderId = await saveOrder(order);
+            onOrderSuccess({ ...order, id: orderId });
             clearCart();
             onClose();
         } catch (error) {

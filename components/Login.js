@@ -18,7 +18,10 @@ function Login() {
     return React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-100' },
         React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg' },
             React.createElement('div', { className: 'text-center' },
-                React.createElement('h1', { className: 'text-4xl font-bold text-pink-600' }, 'ENAMOR'),
+                React.createElement('div', { className: 'flex items-center justify-center w-20 h-20 mx-auto bg-pink-600 rounded-full mb-4' },
+                    React.createElement('span', { className: 'text-4xl font-bold text-white' }, 'KA')
+                ),
+                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Kambeshwar Agencies'),
                 React.createElement('p', { className: 'mt-2 text-gray-500' }, 'Retailer Ordering Portal')
             ),
             React.createElement('form', { onSubmit: handleSubmit, className: 'space-y-6' },

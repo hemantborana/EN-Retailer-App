@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, push, set, query, orderByChild, equalTo } from "firebase/database";
 
@@ -16,16 +15,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
+const fetchDataAsArray = async (path) => {
+    const dataRef = ref(database, path);
+    const snapshot = await get(dataRef);
+    if (!snapshot.exists()) {
+        return [];
+    }
+    const data = snapshot.val();
+    const dataArray = Array.isArray(data) ? data : Object.values(data);
+    return dataArray.filter(item => item !== null);
+};
+
+
 export const fetchItems = async () => {
-    const itemsRef = ref(database, 'itemData/items');
-    const snapshot = await get(itemsRef);
-    return snapshot.exists() ? snapshot.val() : [];
+    return fetchDataAsArray('itemData/items');
 };
 
 export const fetchStock = async () => {
-    const stockRef = ref(database, 'stock');
-    const snapshot = await get(stockRef);
-    return snapshot.exists() ? snapshot.val() : [];
+    return fetchDataAsArray('stock');
 };
 
 export const saveOrder = async (order) => {

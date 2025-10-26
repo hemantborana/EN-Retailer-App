@@ -5,6 +5,7 @@ import ProductCard from './ProductCard.js';
 import ProductDetailModal from './ProductDetailModal.js';
 import CartSidebar from './CartSidebar.js';
 import OrderHistoryModal from './OrderHistoryModal.js';
+import OrderSuccessModal from './OrderSuccessModal.js';
 
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -17,7 +18,10 @@ function Dashboard() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+    const [successfulOrder, setSuccessfulOrder] = React.useState(null);
     const itemsPerPage = 20;
+
+    const bestSellerStyles = new Set(['A039', 'A042', 'F074', 'SB06', 'TS09', 'BR08', 'CR17', 'A032']);
 
     React.useEffect(() => {
         const loadData = async () => {
@@ -25,6 +29,9 @@ function Dashboard() {
                 const [itemsData, stockData] = await Promise.all([fetchItems(), fetchStock()]);
 
                 const stockMap = stockData.reduce((acc, item) => {
+                    if (!item || !item['item name'] || typeof item.color === 'undefined' || typeof item.size === 'undefined') {
+                        return acc;
+                    }
                     const key = `${item['item name']}-${item.color}-${item.size}`;
                     acc[key] = item.quantity;
                     return acc;
@@ -32,23 +39,28 @@ function Dashboard() {
                 setStock(stockMap);
 
                 const productsMap = itemsData.reduce((acc, item) => {
+                    if (!item || !item.Style) {
+                        return acc;
+                    }
                     const style = item.Style;
                     if (!acc[style]) {
                         acc[style] = {
                             style: style,
-                            baseMrp: parseFloat(item.MRP.trim()),
+                            baseMrp: parseFloat(String(item.MRP || 0).trim()),
                             variants: [],
                             colors: new Set()
                         };
                     }
+                    
+                    const color = String(item.Color || '').trim();
                     acc[style].variants.push({
                         description: item.Description,
-                        color: item.Color.trim(),
+                        color: color,
                         size: item.Size,
-                        mrp: parseFloat(item.MRP.trim()),
+                        mrp: parseFloat(String(item.MRP || 0).trim()),
                         barcode: item.Barcode
                     });
-                    acc[style].colors.add(item.Color.trim());
+                    acc[style].colors.add(color);
                     return acc;
                 }, {});
 
@@ -76,7 +88,12 @@ function Dashboard() {
     
     return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
         React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center' },
-            React.createElement('h1', { className: 'text-2xl font-bold text-pink-600' }, 'ENAMOR'),
+            React.createElement('div', { className: 'flex items-center space-x-2' },
+                React.createElement('div', { className: 'flex items-center justify-center w-10 h-10 bg-pink-600 rounded-full' },
+                    React.createElement('span', { className: 'text-xl font-bold text-white' }, 'KA')
+                ),
+                React.createElement('h1', { className: 'text-xl font-bold text-gray-800' }, 'Kambeshwar Agencies')
+            ),
             React.createElement('div', { className: 'flex-1 mx-4 max-w-lg' },
                 React.createElement('input', {
                     type: 'text',
@@ -104,7 +121,12 @@ function Dashboard() {
                 ) :
                 React.createElement(React.Fragment, null,
                     React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6' },
-                        paginatedProducts.map(product => React.createElement(ProductCard, { key: product.style, product: product, onSelect: setSelectedProduct }))
+                        paginatedProducts.map(product => React.createElement(ProductCard, {
+                            key: product.style,
+                            product: product,
+                            onSelect: setSelectedProduct,
+                            isBestSeller: bestSellerStyles.has(product.style)
+                        }))
                     ),
                     totalPages > 1 && React.createElement('div', { className: 'flex justify-center items-center mt-8 space-x-4' },
                         React.createElement('button', { onClick: () => setCurrentPage(p => Math.max(1, p - 1)), disabled: currentPage === 1, className: 'px-4 py-2 bg-white border rounded-md disabled:opacity-50 text-gray-700' }, 'Prev'),
@@ -114,8 +136,9 @@ function Dashboard() {
                 )
         ),
         selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null) }),
-        React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false) }),
-        isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) })
+        React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false), onOrderSuccess: setSuccessfulOrder }),
+        isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) }),
+        successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) })
     );
 }
 

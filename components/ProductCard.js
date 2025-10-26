@@ -2,13 +2,16 @@
 import React from 'react';
 import { getStyleForColor } from '../types.js';
 
-function ProductCard({ product, onSelect }) {
+function ProductCard({ product, onSelect, isBestSeller }) {
     const displayedColors = product.colors.slice(0, 5);
 
     return React.createElement('div', {
         onClick: () => onSelect(product),
-        className: 'bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer overflow-hidden flex flex-col'
+        className: 'relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer overflow-hidden flex flex-col'
     },
+        isBestSeller && React.createElement('div', {
+            className: 'absolute top-2 right-2 bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full z-10'
+        }, 'Best Seller'),
         React.createElement('div', { className: 'p-4 flex-grow' },
             React.createElement('h3', { className: 'text-lg font-bold text-gray-800 truncate' }, product.style),
             React.createElement('p', { className: 'text-sm text-gray-500' }, `₹${product.baseMrp.toFixed(2)}`)

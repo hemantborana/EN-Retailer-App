@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = (username, password) => {
         if (username === 'retailer' && password === 'enamor123') {
-            const userData = { id: 'retailer', name: 'Enamor Retailer' };
+            const userData = { id: 'retailer', name: 'Kambeshwar Agencies' };
             setUser(userData);
             return true;
         }
