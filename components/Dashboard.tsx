@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { User } from '../App';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { FirebaseItem, StockItem, Product, ProductVariant } from '../types';
 import { fetchItems, fetchStock } from '../services/firebaseService';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from './ProductCard';
 import ProductDetailModal from './ProductDetailModal';
 import CartSidebar from './CartSidebar';
 import OrderHistoryModal from './OrderHistoryModal';
 
-// Icons
+// --- ICONS ---
 const CartIcon = ({ count }: { count: number }) => (
     <div className="relative">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 group-hover:text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -32,13 +32,49 @@ const Spinner = () => (
     </div>
 );
 
+// --- USER DROPDOWN ---
+const UserDropdown: React.FC = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const { user, logout } = useAuth();
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-interface DashboardProps {
-    user: User;
-    onLogout: () => void;
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    if (!user) return null;
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button onClick={() => setIsOpen(!isOpen)} className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100">
+                <UserIcon />
+                <span className="hidden md:block text-sm font-medium">{user.name}</span>
+                 <svg className="h-4 w-4 hidden md:block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                    <div className="px-4 py-2 text-sm text-gray-700 md:hidden">
+                        <p className="font-semibold">{user.name}</p>
+                    </div>
+                     <div className="md:hidden border-t border-gray-100"></div>
+                    <a href="#" onClick={(e) => { e.preventDefault(); logout(); }} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Logout
+                    </a>
+                </div>
+            )}
+        </div>
+    );
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
+const ITEMS_PER_PAGE = 20;
+
+const Dashboard: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -46,10 +82,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isOrdersOpen, setIsOrdersOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-
+    const [currentPage, setCurrentPage] = useState(1);
+    
+    const { user } = useAuth();
     const { totalItems } = useCart();
 
     const processData = useCallback((items: FirebaseItem[], stock: StockItem[]) => {
+        // ... (data processing logic is unchanged)
         const stockMap = new Map<string, number>();
         stock.forEach(s => {
             const key = `${s['item name']}-${s.color.toUpperCase()}-${s.size.toUpperCase()}`;
@@ -112,13 +151,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             }
         };
         loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [processData]);
 
     const filteredProducts = useMemo(() => {
+        setCurrentPage(1); // Reset page on search
         if (!searchTerm) return products;
         return products.filter(p => p.style.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm]);
+
+    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredProducts, currentPage]);
 
     return (
         <div className="min-h-screen bg-brand-background">
@@ -135,16 +180,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                                 className="w-full px-4 py-2 text-sm border border-gray-300 rounded-full focus:ring-brand-primary focus:border-brand-primary"
                             />
                         </div>
-                        <div className="flex items-center space-x-4 md:space-x-6">
-                            <button onClick={() => setIsOrdersOpen(true)} className="hidden md:block text-sm font-medium text-gray-600 hover:text-brand-primary">My Orders</button>
-                            <button onClick={() => setIsCartOpen(true)} className="group">
+                        <div className="flex items-center space-x-2 md:space-x-4">
+                            <button onClick={() => setIsOrdersOpen(true)} className="text-sm font-medium text-gray-600 hover:text-brand-primary p-2 rounded-full hover:bg-gray-100">My Orders</button>
+                            <button onClick={() => setIsCartOpen(true)} className="group p-2 rounded-full hover:bg-gray-100">
                                 <CartIcon count={totalItems} />
                             </button>
-                            <div className="hidden md:flex items-center space-x-2">
-                                <UserIcon />
-                                <span className="text-sm font-medium">{user.name}</span>
-                                <button onClick={onLogout} className="text-sm text-brand-text-light hover:underline">(Logout)</button>
-                            </div>
+                            <UserDropdown />
                         </div>
                     </div>
                 </div>
@@ -156,11 +197,40 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 ) : error ? (
                     <p className="text-center text-red-500">{error}</p>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                        {filteredProducts.map(product => (
-                            <ProductCard key={product.style} product={product} onSelect={() => setSelectedProduct(product)} />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                            {paginatedProducts.map(product => (
+                                <ProductCard key={product.style} product={product} onSelect={() => setSelectedProduct(product)} />
+                            ))}
+                        </div>
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center mt-8 space-x-4">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-sm text-gray-600">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
+                         {filteredProducts.length === 0 && !isLoading && (
+                            <div className="text-center py-16">
+                                <h3 className="text-xl font-semibold text-gray-700">No products found</h3>
+                                <p className="text-gray-500 mt-2">Try adjusting your search term.</p>
+                            </div>
+                         )}
+                    </>
                 )}
             </main>
 
@@ -172,7 +242,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             )}
 
             <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            {isOrdersOpen && <OrderHistoryModal user={user} onClose={() => setIsOrdersOpen(false)} />}
+            {isOrdersOpen && <OrderHistoryModal onClose={() => setIsOrdersOpen(false)} />}
         </div>
     );
 };

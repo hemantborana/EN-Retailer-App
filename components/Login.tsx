@@ -1,22 +1,18 @@
-
 import React, { useState } from 'react';
-import type { User } from '../App';
+import { useAuth } from '../context/AuthContext';
 
-interface LoginProps {
-    onLogin: (user: User) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const { login } = useAuth();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         // Simple hardcoded authentication
         if (username === 'retailer' && password === 'enamor123') {
-            onLogin({ id: 'ret001', name: 'ABC Retail' });
+            login({ id: 'ret001', name: 'ABC Retail' });
         } else {
             setError('Invalid username or password.');
         }

@@ -1,7 +1,8 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { saveOrder } from '../services/firebaseService';
-import type { User } from '../App';
 
 interface CartSidebarProps {
     isOpen: boolean;
@@ -10,26 +11,30 @@ interface CartSidebarProps {
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
     const { cartItems, removeFromCart, updateQuantity, clearCart, totalAmount } = useCart();
+    const { user } = useAuth();
+    const { addToast } = useToast();
     const [isPlacingOrder, setIsPlacingOrder] = React.useState(false);
 
     const handlePlaceOrder = async () => {
+        if (!user) {
+            addToast("You must be logged in to place an order.", 'error');
+            return;
+        }
         setIsPlacingOrder(true);
         try {
-            // In a real app, user would be from context/auth
-            const mockUser: User = { id: 'ret001', name: 'ABC Retail' };
             await saveOrder({
-                retailerId: mockUser.id,
+                retailerId: user.id,
                 timestamp: Date.now(),
                 items: cartItems,
                 totalAmount: totalAmount,
                 status: 'Pending'
             });
-            alert('Order placed successfully!');
+            addToast('Order placed successfully!', 'success');
             clearCart();
             onClose();
         } catch (error) {
             console.error("Failed to place order: ", error);
-            alert("Failed to place order. Please try again.");
+            addToast("Failed to place order. Please try again.", 'error');
         } finally {
             setIsPlacingOrder(false);
         }

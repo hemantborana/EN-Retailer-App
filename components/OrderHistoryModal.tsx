@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Order } from '../types';
-import type { User } from '../App';
+import { useAuth } from '../context/AuthContext';
 import { fetchOrders } from '../services/firebaseService';
 
 interface OrderHistoryModalProps {
-    user: User;
     onClose: () => void;
 }
 
@@ -15,13 +13,19 @@ const Spinner = () => (
     </div>
 );
 
-const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({ user, onClose }) => {
+const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({ onClose }) => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
 
     useEffect(() => {
         const loadOrders = async () => {
+            if (!user) {
+                setError("No user is logged in.");
+                setIsLoading(false);
+                return;
+            }
             try {
                 setIsLoading(true);
                 const fetchedOrders = await fetchOrders(user.id);
@@ -34,7 +38,7 @@ const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({ user, onClose }) 
             }
         };
         loadOrders();
-    }, [user.id]);
+    }, [user]);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">

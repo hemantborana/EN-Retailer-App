@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enamor Retailer Ordering</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,6 +19,21 @@
             },
             fontFamily: {
               sans: ['"Poppins"', 'sans-serif'],
+            },
+            animation: {
+              'fade-in-right': 'fade-in-right 0.5s ease-in-out forwards',
+            },
+            keyframes: {
+              'fade-in-right': {
+                '0%': {
+                  opacity: '0',
+                  transform: 'translateX(20px)',
+                },
+                '100%': {
+                  opacity: '1',
+                  transform: 'translateX(0)',
+                },
+              },
             },
           },
         },
@@ -41,6 +55,6 @@
 </head>
   <body class="bg-brand-background">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
