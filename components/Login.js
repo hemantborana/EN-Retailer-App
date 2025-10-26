@@ -1,53 +1,117 @@
 
 import React from 'react';
 import { useAuth } from '../context/AuthContext.js';
+import { generateOTP, verifyOTP } from '../services/authService.js';
+import OtpInput from './OtpInput.js';
 
 function Login() {
-    const [username, setUsername] = React.useState('');
-    const [password, setPassword] = React.useState('');
+    const [step, setStep] = React.useState('email'); // 'email', 'otp'
+    const [email, setEmail] = React.useState('');
     const [error, setError] = React.useState('');
+    const [message, setMessage] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
+    const [businessName, setBusinessName] = React.useState('');
     const { login } = useAuth();
 
-    const handleSubmit = (e) => {
+    const handleSendOTP = async (e) => {
         e.preventDefault();
-        if (!login(username, password)) {
-            setError('Invalid username or password');
+        setError('');
+        setMessage('');
+        setIsLoading(true);
+
+        const response = await generateOTP(email);
+        
+        if (response.success) {
+            if (response.data && response.data.isAdmin) {
+                const adminResponse = await verifyOTP(email, email);
+                 if (adminResponse.success) {
+                    login(adminResponse.data);
+                } else {
+                    setError(adminResponse.message || 'Admin login failed.');
+                }
+                setIsLoading(false);
+                return;
+            }
+            setBusinessName(response.data.businessName);
+            setMessage(response.message);
+            setStep('otp');
+        } else {
+            setError(response.message || 'Failed to send OTP.');
+        }
+        setIsLoading(false);
+    };
+
+    const handleVerifyOTP = async (submittedOtp) => {
+        if (isLoading) return;
+        setError('');
+        setMessage('');
+        setIsLoading(true);
+
+        const response = await verifyOTP(email, submittedOtp);
+        setIsLoading(false);
+
+        if (response.success) {
+            login(response.data);
+        } else {
+            setError(response.message || 'Invalid OTP.');
         }
     };
 
-    return React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-100' },
-        React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg' },
+    const Spinner = () => React.createElement('svg', { className: "animate-spin h-5 w-5 text-white", xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24" },
+        React.createElement('circle', { className: "opacity-25", cx: "12", cy: "12", r: "10", stroke: "currentColor", strokeWidth: "4" }),
+        React.createElement('path', { className: "opacity-75", fill: "currentColor", d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" })
+    );
+
+    const emailForm = React.createElement('form', { onSubmit: handleSendOTP, className: 'space-y-6' },
+        React.createElement('div', null,
+            React.createElement('label', { htmlFor: 'email', className: 'block text-sm font-medium text-gray-700' }, 'Registered Email / ID'),
+            React.createElement('input', {
+                type: 'text', id: 'email', value: email,
+                onChange: (e) => setEmail(e.target.value),
+                className: 'w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition',
+                placeholder: 'Enter your email or ID',
+                required: true
+            })
+        ),
+        React.createElement('button', {
+            type: 'submit',
+            disabled: isLoading || !email,
+            className: 'w-full flex justify-center items-center space-x-2 py-3 text-white bg-pink-600 rounded-lg hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-300 disabled:bg-pink-400 disabled:cursor-not-allowed'
+        },
+            isLoading && React.createElement(Spinner),
+            React.createElement('span', null, 'Send OTP')
+        )
+    );
+
+    const otpForm = React.createElement('div', { className: 'space-y-6' },
+        React.createElement('div', { className: 'text-center' },
+            React.createElement('p', { className: 'text-sm text-gray-600' }, `Enter the OTP sent to your registered email for:`),
+            React.createElement('p', { className: 'font-bold text-gray-800' }, businessName)
+        ),
+        React.createElement(OtpInput, { length: 6, onComplete: handleVerifyOTP }),
+        isLoading && React.createElement('div', { className: 'flex justify-center items-center' }, React.createElement('p', { className: 'text-sm text-gray-500' }, 'Verifying...')),
+        React.createElement('div', { className: 'text-center' },
+             React.createElement('button', {
+                onClick: () => { setStep('email'); setError(''); setMessage(''); },
+                className: 'text-sm text-pink-600 hover:underline'
+            }, 'Use a different email/ID')
+        )
+    );
+
+    return React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 p-4' },
+        React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg' },
             React.createElement('div', { className: 'text-center' },
                 React.createElement('div', { className: 'flex items-center justify-center w-20 h-20 mx-auto bg-pink-600 rounded-full mb-4' },
                     React.createElement('span', { className: 'text-4xl font-bold text-white' }, 'KA')
                 ),
                 React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Kambeshwar Agencies'),
-                React.createElement('p', { className: 'mt-2 text-gray-500' }, 'Retailer Ordering Portal')
-            ),
-            React.createElement('form', { onSubmit: handleSubmit, className: 'space-y-6' },
-                React.createElement('div', null,
-                    React.createElement('label', { htmlFor: 'username', className: 'text-sm font-medium text-gray-700' }, 'Username'),
-                    React.createElement('input', {
-                        type: 'text', id: 'username', value: username,
-                        onChange: (e) => setUsername(e.target.value),
-                        className: 'w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500',
-                        required: true
-                    })
-                ),
-                React.createElement('div', null,
-                    React.createElement('label', { htmlFor: 'password', className: 'text-sm font-medium text-gray-700' }, 'Password'),
-                    React.createElement('input', {
-                        type: 'password', id: 'password', value: password,
-                        onChange: (e) => setPassword(e.target.value),
-                        className: 'w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500',
-                        required: true
-                    })
-                ),
-                error && React.createElement('p', { className: 'text-sm text-center text-red-500' }, error),
-                React.createElement('button', { type: 'submit', className: 'w-full py-2 text-white bg-pink-600 rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-300' },
-                    'Sign In'
+                React.createElement('p', { className: 'mt-2 text-gray-500' }, 
+                    step === 'email' ? 'Retailer Ordering Portal' : 'OTP Verification'
                 )
-            )
+            ),
+            error && React.createElement('div', { className: 'p-3 text-center text-sm text-red-800 bg-red-100 rounded-lg', role: 'alert' }, error),
+            message && !error && React.createElement('div', { className: 'p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg', role: 'status' }, message),
+            step === 'email' ? emailForm : otpForm
         )
     );
 }
