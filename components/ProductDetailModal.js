@@ -44,18 +44,6 @@ function ProductDetailModal({ product, stock, onClose }) {
 
     const variantsForColor = product.variants.filter(v => v.color === selectedColor.code);
 
-    const KeyFeatures = ({ features }) => {
-        if (!features || features.length === 0) {
-            return null; // Or a loading skeleton
-        }
-        return React.createElement('div', { className: 'mt-4' },
-            React.createElement('h4', { className: 'font-semibold text-gray-800' }, 'Key Features'),
-            React.createElement('ul', { className: 'list-disc list-inside text-sm text-gray-600 mt-2 space-y-1' },
-                features.map((feature, index) => React.createElement('li', { key: index }, feature))
-            )
-        );
-    };
-
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'p-4 border-b' },
@@ -74,8 +62,7 @@ function ProductDetailModal({ product, stock, onClose }) {
                 )
             ),
             React.createElement('div', { className: 'flex-grow overflow-y-auto p-4' },
-                 React.createElement(KeyFeatures, { features: product.features }),
-                React.createElement('div', { className: 'text-gray-800 mt-4' },
+                React.createElement('div', { className: 'text-gray-800' },
                     React.createElement('p', { className: 'font-semibold' }, `Color: ${selectedColor.name}`),
                     React.createElement('p', { className: 'text-xs text-gray-500 mt-1' }, '*Stock levels are an estimate. You may order more than the available quantity.')
                 ),

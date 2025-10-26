@@ -1,6 +1,6 @@
 const DB_NAME = 'KambeshwarDB';
 const DB_VERSION = 1;
-const STORES = ['products', 'stock', 'features'];
+const STORES = ['products', 'stock'];
 
 let db;
 

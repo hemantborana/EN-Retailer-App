@@ -1,7 +1,6 @@
 import React from 'react';
-import { fetchItems, fetchStock, fetchProductFeatures, saveProductFeature } from '../services/firebaseService.js';
+import { fetchItems, fetchStock } from '../services/firebaseService.js';
 import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
-import { parseSearchQuery, getProductFeatures } from '../services/geminiService.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -22,8 +21,6 @@ function Dashboard() {
     const [isCartOpen, setCartOpen] = React.useState(false);
     const [isHistoryOpen, setHistoryOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [isAiSearching, setIsAiSearching] = React.useState(false);
-    const [aiFilters, setAiFilters] = React.useState(null);
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
     const [successfulOrder, setSuccessfulOrder] = React.useState(null);
@@ -32,41 +29,9 @@ function Dashboard() {
     const itemsPerPage = 20;
 
     const bestSellerStyles = new Set(['A039', 'A042', 'F074', 'SB06', 'TS09', 'BR08', 'CR17', 'A032']);
-
+    
     React.useEffect(() => {
-        const fetchMissingFeatures = async (currentProducts, existingFeatures) => {
-            const productsWithoutFeatures = currentProducts.filter(p => !existingFeatures[p.style] || existingFeatures[p.style].length === 0);
-            
-            if (productsWithoutFeatures.length === 0) return;
-
-            console.log(`Fetching features for ${productsWithoutFeatures.length} products in the background...`);
-            let newFeaturesFound = false;
-            const allFeatures = { ...existingFeatures };
-
-            for (const product of productsWithoutFeatures) {
-                try {
-                    const features = await getProductFeatures(product.style);
-                    if (features && features.length > 0) {
-                        allFeatures[product.style] = features;
-                        await saveProductFeature(product.style, features);
-                        newFeaturesFound = true;
-                        
-                        setProducts(prevProducts => prevProducts.map(p => 
-                            p.style === product.style ? { ...p, features } : p
-                        ));
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch features for ${product.style}`, e);
-                }
-            }
-            
-            if (newFeaturesFound) {
-                await saveData('features', allFeatures);
-                console.log("Finished fetching and caching new features.");
-            }
-        };
-
-        const processAndSetData = (itemsData, stockData, featuresData = {}) => {
+        const processAndSetData = (itemsData, stockData) => {
             const stockMap = stockData.reduce((acc, item) => {
                 if (!item || !item['item name'] || typeof item.color === 'undefined' || typeof item.size === 'undefined') return acc;
                 const key = `${item['item name']}-${item.color}-${item.size}`;
@@ -108,7 +73,6 @@ function Dashboard() {
             const productsArray = Object.values(productsMap).map(p => ({ 
                 ...p, 
                 colors: Array.from(p.colors.values()),
-                features: featuresData[p.style] || []
             }));
             
             const sortedProducts = productsArray.sort((a, b) => {
@@ -124,34 +88,31 @@ function Dashboard() {
             setProducts(sortedProducts);
             setStock(stockMap);
             setCategories(['all', ...allCategories.sort()]);
-            
-            fetchMissingFeatures(sortedProducts, featuresData);
         };
 
         const loadInitialData = async () => {
             setLoading(true);
             try {
-                const [cachedItems, cachedStock, cachedFeatures] = await Promise.all([
-                    loadDataFromDB('products'), loadDataFromDB('stock'), loadDataFromDB('features')
+                const [cachedItems, cachedStock] = await Promise.all([
+                    loadDataFromDB('products'), loadDataFromDB('stock')
                 ]);
                 
                 if (cachedItems && cachedStock) {
-                    processAndSetData(cachedItems, cachedStock, cachedFeatures || {});
+                    processAndSetData(cachedItems, cachedStock);
                     setLoading(false);
                 }
 
-                const [itemsData, stockData, featuresData] = await Promise.all([
-                    fetchItems(), fetchStock(), fetchProductFeatures()
+                const [itemsData, stockData] = await Promise.all([
+                    fetchItems(), fetchStock()
                 ]);
                 
                 const hasChanges = JSON.stringify(cachedItems) !== JSON.stringify(itemsData) ||
-                                   JSON.stringify(cachedStock) !== JSON.stringify(stockData) ||
-                                   JSON.stringify(cachedFeatures) !== JSON.stringify(featuresData);
+                                   JSON.stringify(cachedStock) !== JSON.stringify(stockData);
                 
                 if (hasChanges || !cachedItems || !cachedStock) {
-                    processAndSetData(itemsData, stockData, featuresData);
+                    processAndSetData(itemsData, stockData);
                     await Promise.all([
-                        saveData('products', itemsData), saveData('stock', stockData), saveData('features', featuresData)
+                        saveData('products', itemsData), saveData('stock', stockData)
                     ]);
                 }
             } catch (error) {
@@ -165,57 +126,22 @@ function Dashboard() {
         loadInitialData();
     }, [showToast]);
 
-    const handleSmartSearch = async () => {
-        if (!searchTerm.trim()) {
-            setAiFilters(null);
-            return;
-        }
-        setIsAiSearching(true);
-        const result = await parseSearchQuery(searchTerm);
-        if (result.success) {
-            setAiFilters(result.filters);
-        } else {
-            showToast(result.message, 'error');
-            setAiFilters(null);
-        }
-        setIsAiSearching(false);
+    const handleSearch = () => {
         setCurrentPage(1);
-    };
-
-    const clearAiFilter = (key) => {
-        const newFilters = { ...aiFilters };
-        delete newFilters[key];
-        setAiFilters(Object.keys(newFilters).length === 0 ? null : newFilters);
     };
     
     const filteredProducts = React.useMemo(() => products.filter(p => {
         const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
         if (!matchesCategory) return false;
 
-        if (aiFilters) {
-            const { category, color, size, attributes, inStock } = aiFilters;
-            const combinedFeatures = [p.description, ...(p.features || [])].join(' ').toLowerCase();
-
-            if (category && !p.category?.toLowerCase().includes(category.toLowerCase())) return false;
-            if (color && !p.colors.some(c => c.name.toLowerCase().includes(color.toLowerCase()))) return false;
-            if (size && !p.variants.some(v => v.size?.toLowerCase() === size.toLowerCase())) return false;
-            if (attributes && attributes.length > 0) {
-                if (!attributes.every(attr => combinedFeatures.includes(attr.toLowerCase()))) return false;
-            }
-            if (inStock && !p.variants.some(v => (stock[`${p.style}-${v.color}-${v.size}`] || 0) > 0)) {
-                return false;
-            }
-            return true;
-        } else if (searchTerm.trim()) {
+        if (searchTerm.trim()) {
             const searchTermLower = searchTerm.toLowerCase();
-            const featuresString = (p.features || []).join(' ').toLowerCase();
             return p.style.toLowerCase().includes(searchTermLower) ||
                    p.colors.some(c => c.name.toLowerCase().includes(searchTermLower)) ||
-                   (p.description && p.description.toLowerCase().includes(searchTermLower)) ||
-                   featuresString.includes(searchTermLower);
+                   (p.description && p.description.toLowerCase().includes(searchTermLower));
         }
         return true;
-    }), [products, selectedCategory, searchTerm, aiFilters, stock]);
+    }), [products, selectedCategory, searchTerm]);
 
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -228,17 +154,16 @@ function Dashboard() {
     const searchInput = React.createElement('div', { className: 'relative w-full' },
         React.createElement('input', {
             type: 'text',
-            placeholder: 'Search by style or use natural language...',
+            placeholder: 'Search by style, color, or description...',
             className: 'w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500',
             value: searchTerm,
-            onChange: e => { setSearchTerm(e.target.value); if(aiFilters) setAiFilters(null); },
-            onKeyDown: e => e.key === 'Enter' && handleSmartSearch()
+            onChange: e => setSearchTerm(e.target.value),
+            onKeyDown: e => e.key === 'Enter' && handleSearch()
         }),
         React.createElement('button', {
-            onClick: handleSmartSearch,
-            disabled: isAiSearching,
-            className: 'absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-500 hover:text-pink-600 disabled:opacity-50'
-        }, isAiSearching ? React.createElement('div', { className: 'spinner h-5 w-5 border-2 border-pink-500 border-t-transparent rounded-full' }) : React.createElement(SearchIcon))
+            onClick: handleSearch,
+            className: 'absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-500 hover:text-pink-600'
+        }, React.createElement(SearchIcon))
     );
 
     const categoryFilter = React.createElement('select', {
@@ -247,15 +172,6 @@ function Dashboard() {
         className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white'
     }, categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat === 'all' ? 'All Categories' : cat)));
     
-    const aiFilterPills = aiFilters && React.createElement('div', { className: 'flex flex-wrap gap-2 items-center' },
-         React.createElement('span', { className: 'text-sm font-medium text-gray-700' }, 'AI Filters:'),
-         Object.entries(aiFilters).map(([key, value]) => 
-            React.createElement('span', { key: key, className: 'flex items-center bg-pink-100 text-pink-800 text-xs font-semibold px-2.5 py-0.5 rounded-full' },
-                `${key}: ${Array.isArray(value) ? value.join(', ') : value}`,
-                React.createElement('button', { onClick: () => clearAiFilter(key), className: 'ml-1.5 text-pink-500 hover:text-pink-700' }, '×')
-            )
-        )
-    );
 
     return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
         React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-30' },
@@ -290,8 +206,7 @@ function Dashboard() {
             React.createElement('div', { className: 'mb-6 space-y-4' },
                 React.createElement('div', { className: 'hidden md:flex items-center max-w-xs' },
                     categoryFilter
-                ),
-                aiFilterPills
+                )
             ),
             loading ?
                 React.createElement('div', { className: 'flex justify-center items-center h-64' },
