@@ -1,7 +1,6 @@
-
 import React from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 function OrderSuccessModal({ order, onClose }) {
     if (!order) return null;
@@ -38,14 +37,14 @@ function OrderSuccessModal({ order, onClose }) {
             tableRows.push(itemData);
         });
 
-        doc.autoTable({
+        autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 55,
         });
 
         // Total Amount
-        const finalY = doc.previousAutoTable.finalY;
+        const finalY = doc.lastAutoTable.finalY;
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text(`Total Amount: ₹${order.totalAmount.toFixed(2)}`, 14, finalY + 10);
