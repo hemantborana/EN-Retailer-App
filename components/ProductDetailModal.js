@@ -1,98 +1,103 @@
-
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
 import { getStyleForColor } from '../types.js';
 
-function ProductDetailModal({ product, onClose }) {
+function ProductDetailModal({ product, stock, onClose }) {
     const { addToCart } = useCart();
     const { showToast } = useToast();
-    const [selectedColor, setSelectedColor] = React.useState(product.colors[0]);
     const [quantities, setQuantities] = React.useState({});
+    const [selectedColor, setSelectedColor] = React.useState(product.colors[0]);
 
     const handleQuantityChange = (barcode, value) => {
-        const newQuantities = { ...quantities };
-        newQuantities[barcode] = parseInt(value, 10) || 0;
-        setQuantities(newQuantities);
+        const quantity = parseInt(value, 10);
+        setQuantities(prev => ({ ...prev, [barcode]: isNaN(quantity) ? '' : quantity }));
     };
 
     const handleAddToCart = () => {
         let itemsAdded = 0;
-        Object.entries(quantities).forEach(([barcode, quantity]) => {
+        const variantsForColor = product.variants.filter(v => v.color === selectedColor);
+
+        variantsForColor.forEach(variant => {
+            const quantity = quantities[variant.barcode];
             if (quantity > 0) {
-                const variant = product.variants.find(v => v.barcode === barcode);
-                if (variant) {
-                    addToCart({
-                        style: product.style,
-                        barcode: variant.barcode,
-                        description: variant.description,
-                        mrp: variant.mrp,
-                        quantity: quantity
-                    });
-                    itemsAdded += quantity;
-                }
+                addToCart({
+                    style: product.style,
+                    description: variant.description,
+                    color: variant.color,
+                    size: variant.size,
+                    mrp: variant.mrp,
+                    barcode: variant.barcode,
+                    quantity: quantity
+                });
+                itemsAdded += 1;
             }
         });
 
         if (itemsAdded > 0) {
-            showToast(`${itemsAdded} item(s) added to cart!`);
-            onClose();
+            showToast(`${itemsAdded} item(s) added to cart.`);
+            setQuantities({});
         } else {
             showToast('Please enter a quantity.', 'error');
         }
     };
-    
-    const variantsForSelectedColor = product.variants
-        .filter(v => v.color === selectedColor)
-        .sort((a,b) => a.size.localeCompare(b.size, undefined, {numeric: true}));
+
+    const variantsForColor = product.variants.filter(v => v.color === selectedColor);
 
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
-            React.createElement('div', { className: 'p-4 border-b flex justify-between items-center' },
-                React.createElement('h2', { className: 'text-2xl font-bold' }, product.style),
-                React.createElement('button', { onClick: onClose, className: 'text-gray-500 hover:text-gray-800' },
-                    React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
-                        React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M6 18L18 6M6 6l12 12' })
-                    )
-                )
-            ),
-            React.createElement('div', { className: 'p-4' },
-                 React.createElement('h3', { className: 'text-sm font-semibold text-gray-600 mb-2' }, 'Color'),
-                 React.createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
+        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
+            React.createElement('div', { className: 'p-4 border-b' },
+                React.createElement('h2', { className: 'text-2xl font-bold text-gray-900' }, product.style),
+                React.createElement('div', { className: 'flex items-center space-x-2 mt-2' },
                     product.colors.map(color =>
                         React.createElement('button', {
-                            key: color, onClick: () => setSelectedColor(color),
-                            className: `h-8 w-8 rounded-full border-2 transition ${selectedColor === color ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-300'}`
-                        }, React.createElement('div', {className: 'h-full w-full rounded-full', style: getStyleForColor(color) }))
-                    )
-                )
-            ),
-            React.createElement('div', { className: 'p-4 overflow-y-auto' },
-                React.createElement('div', { className: 'grid grid-cols-3 gap-x-4 gap-y-2 text-sm font-semibold text-gray-500 mb-2' },
-                    React.createElement('span', null, 'Size'),
-                    React.createElement('span', { className: 'text-center' }, 'Stock'),
-                    React.createElement('span', { className: 'text-center' }, 'Order Qty')
-                ),
-                variantsForSelectedColor.map(variant =>
-                     React.createElement('div', { key: variant.barcode, className: 'grid grid-cols-3 gap-x-4 items-center py-2 border-b' },
-                        React.createElement('span', { className: 'font-medium' }, variant.size),
-                        React.createElement('span', { className: `text-center font-bold ${variant.stock > 0 ? 'text-green-600' : 'text-red-500'}` }, variant.stock),
-                        React.createElement('input', {
-                            type: 'number',
-                            min: 0,
-                            max: variant.stock,
-                            value: quantities[variant.barcode] || '',
-                            onChange: e => handleQuantityChange(variant.barcode, e.target.value),
-                            className: 'w-full text-center border-gray-300 rounded-md shadow-sm focus:border-pink-500 focus:ring-pink-500'
+                            key: color,
+                            onClick: () => setSelectedColor(color),
+                            className: `h-8 w-8 rounded-full border-2 ${selectedColor === color ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-200'}`,
+                            style: getStyleForColor(color)
                         })
                     )
                 )
             ),
-            React.createElement('div', { className: 'p-4 border-t mt-auto' },
-                React.createElement('button', {
-                    onClick: handleAddToCart,
-                    className: 'w-full bg-pink-600 text-white py-2 rounded-md hover:bg-pink-700 transition'
-                }, 'Add to Cart')
+            React.createElement('div', { className: 'flex-grow overflow-y-auto p-4' },
+                React.createElement('div', { className: 'text-gray-800' },
+                    React.createElement('p', { className: 'font-semibold' }, `Color: ${selectedColor}`),
+                    React.createElement('p', { className: 'text-xs text-gray-500 mt-1' }, '*Stock levels are an estimate. You may order more than the available quantity.')
+                ),
+                React.createElement('table', { className: 'w-full mt-4 text-sm text-left text-gray-800' },
+                    React.createElement('thead', null,
+                        React.createElement('tr', { className: 'bg-gray-100' },
+                            React.createElement('th', { className: 'p-2 font-semibold text-gray-600' }, 'Size'),
+                            React.createElement('th', { className: 'p-2 font-semibold text-gray-600' }, 'MRP'),
+                            React.createElement('th', { className: 'p-2 font-semibold text-gray-600' }, 'Stock'),
+                            React.createElement('th', { className: 'p-2 font-semibold text-gray-600' }, 'Order Qty')
+                        )
+                    ),
+                    React.createElement('tbody', null,
+                        variantsForColor.map(variant => {
+                            const stockKey = `${product.style}-${variant.color}-${variant.size}`;
+                            const availableStock = stock[stockKey] || 0;
+                            return React.createElement('tr', { key: variant.barcode, className: 'border-b' },
+                                React.createElement('td', { className: 'p-2' }, variant.size),
+                                React.createElement('td', { className: 'p-2' }, `₹${variant.mrp.toFixed(2)}`),
+                                React.createElement('td', { className: 'p-2' }, availableStock),
+                                React.createElement('td', { className: 'p-2' },
+                                    React.createElement('input', {
+                                        type: 'number',
+                                        min: 0,
+                                        value: quantities[variant.barcode] || '',
+                                        onChange: e => handleQuantityChange(variant.barcode, e.target.value),
+                                        className: 'w-20 text-center border-gray-300 rounded-md shadow-sm'
+                                    })
+                                )
+                            );
+                        })
+                    )
+                )
+            ),
+            React.createElement('div', { className: 'p-4 border-t flex justify-end space-x-2' },
+                React.createElement('button', { onClick: onClose, className: 'px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300' }, 'Close'),
+                React.createElement('button', { onClick: handleAddToCart, className: 'px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700' }, 'Add to Cart')
             )
         )
     );

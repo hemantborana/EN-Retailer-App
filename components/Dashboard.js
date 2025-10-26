@@ -1,33 +1,59 @@
-
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
+import { useAuth } from '../context/AuthContext.js';
 import ProductCard from './ProductCard.js';
 import ProductDetailModal from './ProductDetailModal.js';
 import CartSidebar from './CartSidebar.js';
 import OrderHistoryModal from './OrderHistoryModal.js';
-import { useAuth } from '../context/AuthContext.js';
-import { useCart } from '../context/CartContext.js';
-
-const ITEMS_PER_PAGE = 20;
 
 function Dashboard() {
     const { user, logout } = useAuth();
-    const { cartItems } = useCart();
     const [products, setProducts] = React.useState([]);
+    const [stock, setStock] = React.useState({});
     const [loading, setLoading] = React.useState(true);
     const [selectedProduct, setSelectedProduct] = React.useState(null);
     const [isCartOpen, setCartOpen] = React.useState(false);
     const [isHistoryOpen, setHistoryOpen] = React.useState(false);
-    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
-    const [isMenuOpen, setMenuOpen] = React.useState(false);
-    
+    const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+    const itemsPerPage = 20;
+
     React.useEffect(() => {
         const loadData = async () => {
             try {
-                const [items, stock] = await Promise.all([fetchItems(), fetchStock()]);
-                const groupedProducts = groupAndProcessData(items, stock);
-                setProducts(Object.values(groupedProducts));
+                const [itemsData, stockData] = await Promise.all([fetchItems(), fetchStock()]);
+
+                const stockMap = stockData.reduce((acc, item) => {
+                    const key = `${item['item name']}-${item.color}-${item.size}`;
+                    acc[key] = item.quantity;
+                    return acc;
+                }, {});
+                setStock(stockMap);
+
+                const productsMap = itemsData.reduce((acc, item) => {
+                    const style = item.Style;
+                    if (!acc[style]) {
+                        acc[style] = {
+                            style: style,
+                            baseMrp: parseFloat(item.MRP.trim()),
+                            variants: [],
+                            colors: new Set()
+                        };
+                    }
+                    acc[style].variants.push({
+                        description: item.Description,
+                        color: item.Color.trim(),
+                        size: item.Size,
+                        mrp: parseFloat(item.MRP.trim()),
+                        barcode: item.Barcode
+                    });
+                    acc[style].colors.add(item.Color.trim());
+                    return acc;
+                }, {});
+
+                const productsArray = Object.values(productsMap).map(p => ({ ...p, colors: Array.from(p.colors) }));
+                setProducts(productsArray);
             } catch (error) {
                 console.error("Failed to load data:", error);
             } finally {
@@ -37,109 +63,57 @@ function Dashboard() {
         loadData();
     }, []);
 
-    const groupAndProcessData = (items, stock) => {
-        const stockMap = new Map();
-        stock.forEach(s => {
-            const key = `${s['item name']?.toUpperCase()}-${s.color?.toUpperCase()}-${s.size?.toUpperCase()}`;
-            stockMap.set(key, s.quantity);
-        });
-
-        const productsMap = new Map();
-        items.forEach(item => {
-            const style = item.Style;
-            if (!style) return;
-
-            if (!productsMap.has(style)) {
-                productsMap.set(style, {
-                    style: style,
-                    baseMrp: parseFloat(item.MRP.replace(/,/g, '')) || 0,
-                    colors: new Set(),
-                    variants: [],
-                });
-            }
-
-            const product = productsMap.get(style);
-            const variantStock = stockMap.get(`${style.toUpperCase()}-${item.Color?.toUpperCase()}-${item.Size?.toUpperCase()}`) || 0;
-            
-            product.colors.add(item.Color);
-            product.variants.push({
-                barcode: item.Barcode,
-                color: item.Color,
-                description: item.Description,
-                mrp: parseFloat(item.MRP.replace(/,/g, '')) || 0,
-                size: item.Size,
-                stock: variantStock,
-            });
-        });
-        
-        productsMap.forEach(p => p.colors = Array.from(p.colors));
-        return Object.fromEntries(productsMap);
-    };
-
-    const filteredProducts = products.filter(p => p.style.toLowerCase().includes(searchQuery.toLowerCase()));
-    const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-
-    if (loading) {
-        return React.createElement('div', { className: 'flex items-center justify-center h-screen' }, 
-            React.createElement('div', { className: 'text-lg font-semibold' }, 'Loading Products...')
-        );
-    }
-    
-    const UserMenu = () => (
-        React.createElement('div', { className: 'relative' },
-            React.createElement('button', { onClick: () => setMenuOpen(!isMenuOpen), className: 'flex items-center space-x-2' },
-                 React.createElement('span', { className: 'text-white' }, user.name),
-                 React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: `h-5 w-5 text-white transition-transform ${isMenuOpen ? 'rotate-180' : ''}`, viewBox: '0 0 20 20', fill: 'currentColor' },
-                    React.createElement('path', { fillRule: 'evenodd', d: 'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z', clipRule: 'evenodd' })
-                )
-            ),
-            isMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50' },
-                React.createElement('button', { onClick: () => { setHistoryOpen(true); setMenuOpen(false); }, className: 'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Order History'),
-                React.createElement('button', { onClick: logout, className: 'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Logout')
-            )
-        )
+    const filteredProducts = products.filter(p =>
+        p.style.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.colors.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+    const UserIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }));
+    const CartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' }));
     
     return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-        React.createElement('header', { className: 'bg-pink-600 shadow-md sticky top-0 z-40' },
-            React.createElement('div', { className: 'container mx-auto px-4 sm:px-6 lg:px-8' },
-                React.createElement('div', { className: 'flex items-center justify-between h-16' },
-                    React.createElement('h1', { className: 'text-2xl font-bold text-white' }, 'ENAMOR'),
-                    React.createElement('div', { className: 'flex items-center space-x-4' },
-                        React.createElement('input', { 
-                            type: 'text', 
-                            placeholder: 'Search by style...', 
-                            value: searchQuery,
-                            onChange: e => setSearchQuery(e.target.value),
-                            className: 'hidden md:block w-64 px-3 py-1.5 rounded-md border border-pink-400 bg-pink-500 text-white placeholder-pink-200 focus:outline-none focus:ring-2 focus:ring-white'
-                        }),
-                        React.createElement('button', { onClick: () => setCartOpen(true), className: 'relative text-white hover:text-pink-200' },
-                            React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
-                                React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' })
-                            ),
-                            cartItems.length > 0 && React.createElement('span', { className: 'absolute -top-2 -right-2 flex items-center justify-center h-5 w-5 bg-white text-pink-600 rounded-full text-xs font-bold' }, cartItems.length)
-                        ),
-                        React.createElement(UserMenu)
+        React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center' },
+            React.createElement('h1', { className: 'text-2xl font-bold text-pink-600' }, 'ENAMOR'),
+            React.createElement('div', { className: 'flex-1 mx-4 max-w-lg' },
+                React.createElement('input', {
+                    type: 'text',
+                    placeholder: 'Search by style or color...',
+                    className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500',
+                    value: searchTerm,
+                    onChange: e => { setSearchTerm(e.target.value); setCurrentPage(1); }
+                })
+            ),
+            React.createElement('div', { className: 'flex items-center space-x-4' },
+                React.createElement('button', { onClick: () => setCartOpen(true), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(CartIcon)),
+                React.createElement('div', { className: 'relative' },
+                    React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(UserIcon)),
+                    userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20' },
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHistoryOpen(true); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Order History'),
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); logout(); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Logout')
                     )
                 )
             )
         ),
-        React.createElement('main', { className: 'container mx-auto p-4 sm:p-6 lg:p-8' },
-            React.createElement('div', {
-                className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6'
-            }, paginatedProducts.map(product => React.createElement(ProductCard, { key: product.style, product: product, onSelect: setSelectedProduct }))),
-            totalPages > 1 && React.createElement('div', { className: 'flex justify-center mt-8' },
-                 Array.from({ length: totalPages }, (_, i) => i + 1).map(page => 
-                    React.createElement('button', {
-                        key: page,
-                        onClick: () => setCurrentPage(page),
-                        className: `mx-1 px-3 py-1 rounded ${currentPage === page ? 'bg-pink-600 text-white' : 'bg-white text-gray-700'}`
-                    }, page)
+        React.createElement('main', { className: 'p-4 md:p-8' },
+            loading ?
+                React.createElement('div', { className: 'flex justify-center items-center h-64' },
+                    React.createElement('div', { className: 'spinner h-12 w-12 border-4 border-pink-500 border-t-transparent rounded-full' })
+                ) :
+                React.createElement(React.Fragment, null,
+                    React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6' },
+                        paginatedProducts.map(product => React.createElement(ProductCard, { key: product.style, product: product, onSelect: setSelectedProduct }))
+                    ),
+                    totalPages > 1 && React.createElement('div', { className: 'flex justify-center items-center mt-8 space-x-4' },
+                        React.createElement('button', { onClick: () => setCurrentPage(p => Math.max(1, p - 1)), disabled: currentPage === 1, className: 'px-4 py-2 bg-white border rounded-md disabled:opacity-50 text-gray-700' }, 'Prev'),
+                        React.createElement('span', { className: 'text-gray-700' }, `Page ${currentPage} of ${totalPages}`),
+                        React.createElement('button', { onClick: () => setCurrentPage(p => Math.min(totalPages, p + 1)), disabled: currentPage === totalPages, className: 'px-4 py-2 bg-white border rounded-md disabled:opacity-50 text-gray-700' }, 'Next')
+                    )
                 )
-            )
         ),
-        selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, onClose: () => setSelectedProduct(null) }),
+        selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null) }),
         React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false) }),
         isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) })
     );
