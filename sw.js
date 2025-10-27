@@ -1,9 +1,11 @@
-const CACHE_NAME = 'kambeshwar-agencies-cache-v1';
+
+const CACHE_NAME = 'kambeshwar-agencies-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/index.js',
-  '/components/HC_LOGO_-_Copy-removebg-preview.webp'
+  'https://i.ibb.co/zhgM9jrJ/HC-LOGO-Copy-removebg-preview.webp',
+  'https://i.ibb.co/k21PgZ5R/applogo.png'
 ];
 
 self.addEventListener('install', event => {

@@ -1,16 +1,17 @@
+
 {
   "short_name": "Kambeshwar Ordering",
   "name": "Kambeshwar Agencies Ordering App",
   "description": "A professional B2B ordering platform for Kambeshwar Agencies retailers to browse products from various brands, check stock, and place orders seamlessly.",
   "icons": [
     {
-      "src": "/components/applogo.png",
+      "src": "https://i.ibb.co/k21PgZ5R/applogo.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/components/applogo.png",
+      "src": "https://i.ibb.co/k21PgZ5R/applogo.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"

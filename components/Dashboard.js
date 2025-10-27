@@ -229,7 +229,7 @@ function Dashboard() {
     return React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200' },
         React.createElement('header', { className: 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
             React.createElement('div', { className: 'flex items-center space-x-3' },
-                React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-10 sm:h-12 w-auto' }),
+                React.createElement('img', { src: 'https://i.ibb.co/zhgM9jrJ/HC-LOGO-Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-10 sm:h-12 w-auto' }),
                  React.createElement('div', null,
                     React.createElement('h1', { className: 'text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 hidden lg:block' }, 'Kambeshwar Agencies'),
                     React.createElement('p', { className: 'text-sm font-semibold text-gray-700 dark:text-gray-200 block lg:hidden truncate max-w-[150px]', title: user.name }, user.name)
@@ -324,7 +324,7 @@ function Dashboard() {
             React.createElement('div', { className: 'max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8' },
                 React.createElement('div', { className: 'flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0' },
                     React.createElement('div', { className: 'flex items-center space-x-2' },
-                        React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Logo', className: 'h-8 w-auto' }),
+                        React.createElement('img', { src: 'https://i.ibb.co/zhgM9jrJ/HC-LOGO-Copy-removebg-preview.webp', alt: 'Logo', className: 'h-8 w-auto' }),
                         React.createElement('span', { className: 'text-sm font-semibold text-gray-700 dark:text-gray-200' }, 'Kambeshwar Agencies')
                     ),
                     React.createElement('span', { className: 'text-sm text-gray-500 dark:text-gray-400 text-center order-last md:order-none mt-4 md:mt-0' }, `© ${new Date().getFullYear()} Kambeshwar Agencies. All Rights Reserved.`),

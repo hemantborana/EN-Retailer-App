@@ -104,7 +104,7 @@ function Login() {
         React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4' },
             React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg' },
                 React.createElement('div', { className: 'text-center' },
-                    React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-20 w-auto mx-auto mb-4' }),
+                    React.createElement('img', { src: 'https://i.ibb.co/zhgM9jrJ/HC-LOGO-Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-20 w-auto mx-auto mb-4' }),
                     React.createElement('h1', { className: 'text-2xl font-bold text-gray-800 dark:text-gray-100' }, 'Kambeshwar Agencies'),
                     React.createElement('p', { className: 'mt-2 text-gray-500 dark:text-gray-400' }, 
                         step === 'email' ? 'Retailer Ordering Portal' : 'OTP Verification'
