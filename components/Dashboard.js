@@ -9,6 +9,7 @@ import ProductDetailModal from './ProductDetailModal.js';
 import CartSidebar from './CartSidebar.js';
 import OrderHistoryModal from './OrderHistoryModal.js';
 import OrderSuccessModal from './OrderSuccessModal.js';
+import QuickOrderModal from './QuickOrderModal.js';
 
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -20,6 +21,7 @@ function Dashboard() {
     const [selectedProduct, setSelectedProduct] = React.useState(null);
     const [isCartOpen, setCartOpen] = React.useState(false);
     const [isHistoryOpen, setHistoryOpen] = React.useState(false);
+    const [isQuickOrderOpen, setQuickOrderOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -150,7 +152,10 @@ function Dashboard() {
     const UserIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }));
     const CartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' }));
     const SearchIcon = () => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", viewBox: "0 0 20 20", fill: "currentColor" }, React.createElement('path', { fillRule: "evenodd", d: "M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z", clipRule: "evenodd" }));
-    
+    const QuickOrderIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, 
+        React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M13 10V3L4 14h7v7l9-11h-7z' })
+    );
+
     const searchInput = React.createElement('div', { className: 'relative w-full' },
         React.createElement('input', {
             type: 'text',
@@ -183,6 +188,9 @@ function Dashboard() {
             ),
             React.createElement('div', { className: 'hidden md:flex flex-1 mx-4 max-w-lg' }, searchInput),
             React.createElement('div', { className: 'flex items-center space-x-4' },
+                React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'text-gray-600 hover:text-pink-600', title: 'Quick Order' },
+                    React.createElement(QuickOrderIcon)
+                ),
                 React.createElement('div', { className: 'relative' },
                     React.createElement('button', { onClick: () => setCartOpen(true), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(CartIcon)),
                     totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center' }, totalCartQuantity)
@@ -236,7 +244,8 @@ function Dashboard() {
         selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null) }),
         React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false), onOrderSuccess: setSuccessfulOrder }),
         isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) }),
-        successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) })
+        successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) }),
+        isQuickOrderOpen && React.createElement(QuickOrderModal, { products: products, onClose: () => setQuickOrderOpen(false) })
     );
 }
 
