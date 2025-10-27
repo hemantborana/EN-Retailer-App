@@ -22,9 +22,9 @@ const flattenItems = (items) => {
     return flatList;
 };
 
-const ItemList = ({ title, items, itemType }) => {
+const ItemList = ({ title, items }) => {
     if (!items || items.length === 0) {
-        return React.createElement('div', { className: 'mt-2' },
+        return React.createElement('div', { className: 'mt-4' },
             React.createElement('h4', { className: 'font-semibold text-gray-700 dark:text-gray-300' }, title),
             React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400 italic' }, 'No items in this category.')
         );
@@ -32,12 +32,10 @@ const ItemList = ({ title, items, itemType }) => {
 
     const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
     const renderItem = (item, index) => {
-        // 'sent' items have a `name` prop, original `lineItems` have `style`
-        const style = item.style || item.name; 
-        const description = item.description ? ` - ${item.description.split(',')[0]}` : '';
+        const style = item.style || item.name;
         return React.createElement('div', { key: item.barcode || `${style}-${item.size}-${item.color}-${index}`, className: 'flex justify-between items-center text-sm py-1' },
-            React.createElement('span', { className: 'text-gray-800 dark:text-gray-200' }, `${style} (${item.size}, ${item.color})`),
-            React.createElement('span', { className: 'font-medium text-gray-600 dark:text-gray-300' }, `Qty: ${item.quantity}`)
+            React.createElement('span', { className: 'text-gray-800 dark:text-gray-200 truncate pr-2' }, `${style} (${item.size}, ${item.color})`),
+            React.createElement('span', { className: 'font-medium text-gray-600 dark:text-gray-300 flex-shrink-0' }, `Qty: ${item.quantity}`)
         );
     };
 
@@ -64,31 +62,44 @@ function OrderHistoryItem({ order }) {
         indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
         gray: 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300',
     };
+    
+    const showProcessingDetails = status !== 'Approval Pending' && status !== 'Rejected';
+    
+    const sentItems = showProcessingDetails ? sentData.flatMap(s => s.billedItems || []) : [];
+    const billingItems = showProcessingDetails ? flattenItems(billingData?.items) : [];
+    const pendingItems = showProcessingDetails ? flattenItems(pendingData?.items) : [];
 
-    const sentItems = sentData.flatMap(s => s.billedItems || []);
-    const billingItems = flattenItems(billingData?.items);
-    const pendingItems = flattenItems(pendingData?.items);
-
-    return React.createElement('div', { className: 'border dark:border-gray-700 rounded-lg overflow-hidden' },
+    return React.createElement('div', { className: 'border dark:border-gray-700 rounded-lg overflow-hidden transition-shadow hover:shadow-md' },
         React.createElement('div', { className: 'p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50', onClick: () => setIsExpanded(!isExpanded) },
-            React.createElement('div', { className: 'flex justify-between items-start mb-2' },
+            React.createElement('div', { className: 'flex justify-between items-center' },
                 React.createElement('div', null,
-                    React.createElement('p', { className: 'font-bold' }, `Ref: #${originalOrder.referenceNumber}`),
+                    React.createElement('p', { className: 'font-bold text-lg text-gray-800 dark:text-gray-100' }, `Reference #${originalOrder.referenceNumber}`),
                     React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, new Date(originalOrder.dateTime).toLocaleString())
                 ),
-                React.createElement('div', { className: 'text-right' },
-                    React.createElement('p', { className: 'font-bold text-lg' }, `₹${originalOrder.totalAmount.toFixed(2)}`),
-                    React.createElement('span', { className: `px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[statusColor]}` }, status)
+                React.createElement('div', { className: 'flex flex-col items-end' },
+                    React.createElement('span', { className: `px-3 py-1 text-xs font-semibold rounded-full ${statusClasses[statusColor]}` }, status),
+                    React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300 mt-1' }, `Total Qty: ${originalOrder.totalQuantity}`)
                 )
             )
         ),
         isExpanded && React.createElement('div', { className: 'p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800' },
-            originalOrder.approvedby && React.createElement('p', {className: 'text-sm text-gray-600 dark:text-gray-400'}, `Processed by ${originalOrder.approvedby} on ${new Date(originalOrder.ardate).toLocaleDateString()}`),
-            originalOrder.orderNote && React.createElement('p', {className: 'text-sm text-gray-600 dark:text-gray-400 mt-1'}, `Note: ${originalOrder.orderNote}`),
-            React.createElement(ItemList, { title: '✅ Sent Items', items: sentItems }),
-            React.createElement(ItemList, { title: '⏳ Items in Billing', items: billingItems }),
-            React.createElement(ItemList, { title: '📋 Pending Items', items: pendingItems }),
-            React.createElement(ItemList, { title: '📦 Original Order', items: originalOrder.lineItems })
+            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4' },
+                originalOrder.approvedby && React.createElement('div', null,
+                    React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Processed by'),
+                    React.createElement('p', { className: 'text-gray-800 dark:text-gray-200' }, `${originalOrder.approvedby} on ${new Date(originalOrder.ardate).toLocaleDateString()}`)
+                ),
+                originalOrder.orderNote && React.createElement('div', { className: 'md:col-span-2' },
+                    React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Retailer Note'),
+                    React.createElement('p', { className: 'text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md' }, originalOrder.orderNote)
+                )
+            ),
+            
+            showProcessingDetails && React.createElement(React.Fragment, null,
+                React.createElement(ItemList, { title: '✅ Billed Items', items: sentItems }),
+                React.createElement(ItemList, { title: '⏳ Processing Items', items: billingItems }),
+                React.createElement(ItemList, { title: '📋 Pending Items', items: pendingItems })
+            ),
+            React.createElement(ItemList, { title: '📦 Original Order Details', items: originalOrder.lineItems })
         )
     );
 }
@@ -97,6 +108,7 @@ function OrderHistoryModal({ onClose }) {
     const { user } = useAuth();
     const [orders, setOrders] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState(null);
 
     React.useEffect(() => {
         const loadOrders = async () => {
@@ -155,10 +167,12 @@ function OrderHistoryModal({ onClose }) {
                         statusColor
                     };
                 });
-
+                
+                processedOrders.sort((a, b) => new Date(b.originalOrder.dateTime) - new Date(a.originalOrder.dateTime));
                 setOrders(processedOrders);
-            } catch (error) {
-                console.error("Failed to fetch order history:", error);
+            } catch (err) {
+                setError("Failed to fetch order history. Please try again later.");
+                console.error("Failed to fetch order history:", err);
             } finally {
                 setLoading(false);
             }
@@ -177,11 +191,18 @@ function OrderHistoryModal({ onClose }) {
                 )
             ),
             React.createElement('div', { className: 'flex-grow overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900' },
-                loading ? React.createElement('div', { className: 'flex justify-center items-center h-full' }, React.createElement('p', { className: 'text-gray-900 dark:text-gray-200' }, 'Loading orders...')) :
-                orders.length === 0 ? React.createElement('div', { className: 'flex justify-center items-center h-full' }, React.createElement('p', { className: 'text-gray-500 dark:text-gray-400' }, 'You have no past orders.')) :
-                React.createElement('div', { className: 'space-y-4 text-gray-900 dark:text-gray-200' },
+                loading ? React.createElement('div', { className: 'flex justify-center items-center h-full' }, 
+                    React.createElement('div', { className: 'spinner h-8 w-8 border-4 border-pink-500 border-t-transparent rounded-full' }),
+                    React.createElement('p', { className: 'text-gray-900 dark:text-gray-200 ml-3' }, 'Loading orders...')
+                ) :
+                error ? React.createElement('div', { className: 'flex justify-center items-center h-full text-red-600 dark:text-red-400' }, React.createElement('p', null, error)) :
+                orders.length === 0 ? React.createElement('div', { className: 'flex justify-center items-center h-full' }, React.createElement('p', { className: 'text-gray-500 dark:text-gray-400' }, 'You have not placed any orders yet.')) :
+                React.createElement('div', { className: 'space-y-4' },
                     orders.map(order => React.createElement(OrderHistoryItem, { key: order.id, order: order }))
                 )
+            ),
+            React.createElement('div', { className: 'p-4 border-t dark:border-gray-700 flex justify-end' },
+                React.createElement('button', { onClick: onClose, className: 'px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700' }, 'Close')
             )
         )
     );
