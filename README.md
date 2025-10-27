@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Kambeshwar Agencies Ordering App
 
-# Run and deploy your AI Studio app
+A professional B2B ordering platform for Kambeshwar Agencies retailers to browse products from various brands, check stock, and place orders seamlessly.
 
-This contains everything you need to run your app locally.
+## Overview
 
-View your app in AI Studio: https://ai.studio/apps/drive/1bvv9PiOdjxInhNQ5ieAoHAuEOhLOsrVB
+This application provides a modern and efficient way for registered retailers to manage their inventory and place orders with Kambeshwar Agencies. It's designed to be fast, reliable, and easy to use on both desktop and mobile devices.
 
-## Run Locally
+## Features
 
-**Prerequisites:**  Node.js
+- **Secure Login:** OTP-based authentication for registered retailers.
+- **Product Catalog:** Browse a complete list of products with search and category filtering.
+- **Real-time Stock Info:** Check estimated stock levels for different product variants.
+- **Seamless Ordering:** A user-friendly interface to add items to a cart and place orders.
+- **Order History:** Track the status of current and past orders.
+- **Offline Capability:** Browse products and manage your cart even without an internet connection.
+- **PWA Ready:** Installable on your device for a native app-like experience.
+- **Responsive Design:** Works beautifully on any screen size.
+- **Quick Order:** For power users to quickly add items from a list.
 
+## Technology
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+This application is built with modern web technologies including:
+
+- React for the user interface.
+- Tailwind CSS for styling.
+- Firebase for backend services and database.
+- IndexedDB and Service Workers for offline support and caching.
