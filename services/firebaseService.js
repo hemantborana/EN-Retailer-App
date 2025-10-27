@@ -49,9 +49,7 @@ export const getNextReferenceNumber = async () => {
     });
 
     if (transactionResult.committed) {
-        // The value in the snapshot is the new, incremented value.
-        // The number for our order is the one *before* the increment.
-        return transactionResult.snapshot.val() - 1;
+        return transactionResult.snapshot.val();
     } else {
         throw new Error("Could not retrieve a unique order reference number. Please try again.");
     }
@@ -65,14 +63,42 @@ export const saveOrder = async (order) => {
 
 export const fetchOrders = async (retailerId) => {
     const ordersRef = ref(database, 'unapprovedorders');
-    const q = query(ordersRef, orderByChild('retailerId'), equalTo(retailerId));
-    const snapshot = await get(q);
+    // Fetch all orders and filter client-side to avoid needing a Firebase index.
+    // This is less performant for very large datasets but resolves the current error.
+    const snapshot = await get(ordersRef);
     if (snapshot.exists()) {
-        const orders = snapshot.val();
-        return Object.values(orders).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+        const allOrders = snapshot.val();
+        const userOrders = Object.values(allOrders).filter(order => order && order.retailerId === retailerId);
+        return userOrders.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }
     return [];
 };
+
+export const fetchFullOrderHistory = async (retailerId) => {
+    const unapprovedOrders = await fetchOrders(retailerId);
+
+    const pendingRef = ref(database, 'orders');
+    const billingRef = ref(database, 'billingOrders');
+    const sentRef = ref(database, 'sentOrders');
+
+    const [pendingSnapshot, billingSnapshot, sentSnapshot] = await Promise.all([
+        get(pendingRef),
+        get(billingRef),
+        get(sentRef)
+    ]);
+
+    const pendingData = pendingSnapshot.exists() ? pendingSnapshot.val() : {};
+    const billingData = billingSnapshot.exists() ? billingSnapshot.val() : {};
+    const sentData = sentSnapshot.exists() ? Object.values(sentSnapshot.val()) : [];
+
+    return {
+        unapproved: unapprovedOrders,
+        pending: pendingData,
+        billing: billingData,
+        sent: sentData,
+    };
+};
+
 
 export const saveCart = async (userId, cartItems) => {
     const sanitizedUserId = sanitizeFirebaseKey(userId);
