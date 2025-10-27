@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -48,7 +49,7 @@ function CartGroup({ group, updateQuantity }) {
 }
 
 function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
-    const { cartItems, updateQuantity, clearCart } = useCart();
+    const { cartItems, updateQuantity, clearCart, isLoadingCart } = useCart();
     const { user } = useAuth();
     const { showToast } = useToast();
 
@@ -111,6 +112,11 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
                     )
                 )
             ),
+            isLoadingCart ?
+                React.createElement('div', { className: 'flex-grow flex flex-col items-center justify-center text-center p-4' },
+                    React.createElement('div', { className: 'spinner h-8 w-8 border-4 border-pink-500 border-t-transparent rounded-full' }),
+                    React.createElement('p', { className: 'text-gray-500 mt-4' }, 'Loading Cart...')
+                ) :
             cartItems.length === 0 ?
                 React.createElement('div', { className: 'flex-grow flex flex-col items-center justify-center text-center p-4' },
                     React.createElement(EmptyCartIcon),

@@ -16,6 +16,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
+// Helper to encode a string to a valid Firebase key using Base64.
+// Firebase keys cannot contain '.', '#', '$', '[', or ']'.
+const sanitizeFirebaseKey = (key) => {
+    return btoa(key);
+};
+
 const fetchDataAsArray = async (path) => {
     const dataRef = ref(database, path);
     const snapshot = await get(dataRef);
@@ -54,8 +60,25 @@ export const fetchOrders = async (retailerId) => {
     return [];
 };
 
+export const saveCart = async (userId, cartItems) => {
+    const sanitizedUserId = sanitizeFirebaseKey(userId);
+    const cartRef = ref(database, `PARTY_APP_CART/${sanitizedUserId}`);
+    await set(cartRef, cartItems);
+};
+
+export const fetchCart = async (userId) => {
+    const sanitizedUserId = sanitizeFirebaseKey(userId);
+    const cartRef = ref(database, `PARTY_APP_CART/${sanitizedUserId}`);
+    const snapshot = await get(cartRef);
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    return [];
+};
+
 export const getGeminiUsage = async (userId) => {
-    const usageRef = ref(database, `hbgosample/geminiUsage/${userId}`);
+    const sanitizedUserId = sanitizeFirebaseKey(userId);
+    const usageRef = ref(database, `hbgosample/geminiUsage/${sanitizedUserId}`);
     const snapshot = await get(usageRef);
     if (snapshot.exists()) {
         return snapshot.val();
@@ -64,6 +87,7 @@ export const getGeminiUsage = async (userId) => {
 };
 
 export const setGeminiUsage = async (userId, usageData) => {
-    const usageRef = ref(database, `hbgosample/geminiUsage/${userId}`);
+    const sanitizedUserId = sanitizeFirebaseKey(userId);
+    const usageRef = ref(database, `hbgosample/geminiUsage/${sanitizedUserId}`);
     await set(usageRef, usageData);
 };

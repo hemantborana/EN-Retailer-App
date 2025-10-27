@@ -1,10 +1,42 @@
 
 import React from 'react';
+import { useAuth } from './AuthContext.js';
+import { saveCart, fetchCart } from '../services/firebaseService.js';
 
 const CartContext = React.createContext();
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = React.useState([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const { user } = useAuth();
+
+    React.useEffect(() => {
+        const loadCart = async () => {
+            if (user && user.id) {
+                setIsLoading(true);
+                try {
+                    const savedCart = await fetchCart(user.id);
+                    setCartItems(Array.isArray(savedCart) ? savedCart : []);
+                } catch (error) {
+                    console.error("Failed to load cart from Firebase:", error);
+                    setCartItems([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setCartItems([]);
+                setIsLoading(false);
+            }
+        };
+
+        loadCart();
+    }, [user]);
+
+    React.useEffect(() => {
+        if (!isLoading && user && user.id) {
+            saveCart(user.id, cartItems);
+        }
+    }, [cartItems, user, isLoading]);
 
     const addToCart = (item) => {
         setCartItems(prevItems => {
@@ -30,7 +62,7 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
     };
 
-    const value = { cartItems, addToCart, updateQuantity, clearCart };
+    const value = { cartItems, addToCart, updateQuantity, clearCart, isLoadingCart: isLoading };
 
     return React.createElement(CartContext.Provider, { value }, children);
 };
