@@ -103,7 +103,7 @@ function ProductDetailModal({ product, stock, onClose }) {
                                             min: 0,
                                             value: quantities[variant.barcode] || '',
                                             onChange: e => handleQuantityChange(variant.barcode, e.target.value),
-                                            className: 'w-full text-center border-t border-b border-gray-300 focus:outline-none focus:ring-1 focus:ring-pink-500'
+                                            className: 'w-full text-center border-t border-b border-gray-300 focus:outline-none focus:ring-1 focus:ring-pink-500 py-2'
                                         }),
                                         React.createElement('button', {
                                             onClick: () => handleQuantityChange(variant.barcode, String(currentQuantity + 1)),
