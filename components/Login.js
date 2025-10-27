@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext.js';
 import { generateOTP, verifyOTP } from '../services/authService.js';
 import OtpInput from './OtpInput.js';
+import LoginHelpModal from './LoginHelpModal.js';
 
 function Login() {
     const [step, setStep] = React.useState('email'); // 'email', 'otp'
@@ -11,6 +12,7 @@ function Login() {
     const [message, setMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [businessName, setBusinessName] = React.useState('');
+    const [isHelpOpen, setHelpOpen] = React.useState(false);
     const { login } = useAuth();
 
     const handleSendOTP = async (e) => {
@@ -98,19 +100,28 @@ function Login() {
         )
     );
 
-    return React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 p-4' },
-        React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg' },
-            React.createElement('div', { className: 'text-center' },
-                React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-20 w-auto mx-auto mb-4' }),
-                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Kambeshwar Agencies'),
-                React.createElement('p', { className: 'mt-2 text-gray-500' }, 
-                    step === 'email' ? 'Retailer Ordering Portal' : 'OTP Verification'
+    return React.createElement(React.Fragment, null,
+        React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 p-4' },
+            React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg' },
+                React.createElement('div', { className: 'text-center' },
+                    React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-20 w-auto mx-auto mb-4' }),
+                    React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Kambeshwar Agencies'),
+                    React.createElement('p', { className: 'mt-2 text-gray-500' }, 
+                        step === 'email' ? 'Retailer Ordering Portal' : 'OTP Verification'
+                    )
+                ),
+                error && React.createElement('div', { className: 'p-3 text-center text-sm text-red-800 bg-red-100 rounded-lg', role: 'alert' }, error),
+                message && !error && React.createElement('div', { className: 'p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg', role: 'status' }, message),
+                step === 'email' ? emailForm : otpForm,
+                 React.createElement('div', { className: 'text-center pt-4' },
+                    React.createElement('button', {
+                        onClick: () => setHelpOpen(true),
+                        className: 'text-sm text-pink-600 hover:underline'
+                    }, 'Need Help?')
                 )
-            ),
-            error && React.createElement('div', { className: 'p-3 text-center text-sm text-red-800 bg-red-100 rounded-lg', role: 'alert' }, error),
-            message && !error && React.createElement('div', { className: 'p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg', role: 'status' }, message),
-            step === 'email' ? emailForm : otpForm
-        )
+            )
+        ),
+        isHelpOpen && React.createElement(LoginHelpModal, { onClose: () => setHelpOpen(false) })
     );
 }
 

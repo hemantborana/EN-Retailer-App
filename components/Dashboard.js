@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
 import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
@@ -10,6 +11,8 @@ import CartSidebar from './CartSidebar.js';
 import OrderHistoryModal from './OrderHistoryModal.js';
 import OrderSuccessModal from './OrderSuccessModal.js';
 import QuickOrderModal from './QuickOrderModal.js';
+import HelpCenterModal from './HelpCenterModal.js';
+import PrivacyPolicyModal from './PrivacyPolicyModal.js';
 
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -22,6 +25,8 @@ function Dashboard() {
     const [isCartOpen, setCartOpen] = React.useState(false);
     const [isHistoryOpen, setHistoryOpen] = React.useState(false);
     const [isQuickOrderOpen, setQuickOrderOpen] = React.useState(false);
+    const [isHelpOpen, setHelpOpen] = React.useState(false);
+    const [isPrivacyOpen, setPrivacyOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -321,8 +326,8 @@ function Dashboard() {
                     ),
                     React.createElement('span', { className: 'text-sm text-gray-500 text-center order-last md:order-none mt-4 md:mt-0' }, `© ${new Date().getFullYear()} Kambeshwar Agencies. All Rights Reserved.`),
                     React.createElement('div', { className: 'flex space-x-6 text-sm text-gray-500' },
-                        React.createElement('a', { href: '#', className: 'hover:text-gray-800 hover:underline' }, 'Help Center'),
-                        React.createElement('a', { href: '#', className: 'hover:text-gray-800 hover:underline' }, 'Privacy Policy')
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHelpOpen(true); }, className: 'hover:text-gray-800 hover:underline' }, 'Help Center'),
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setPrivacyOpen(true); }, className: 'hover:text-gray-800 hover:underline' }, 'Privacy Policy')
                     )
                 )
             )
@@ -332,7 +337,9 @@ function Dashboard() {
         React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false), onOrderSuccess: setSuccessfulOrder }),
         isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) }),
         successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) }),
-        isQuickOrderOpen && React.createElement(QuickOrderModal, { products: products, onClose: () => setQuickOrderOpen(false) })
+        isQuickOrderOpen && React.createElement(QuickOrderModal, { products: products, onClose: () => setQuickOrderOpen(false) }),
+        isHelpOpen && React.createElement(HelpCenterModal, { onClose: () => setHelpOpen(false) }),
+        isPrivacyOpen && React.createElement(PrivacyPolicyModal, { onClose: () => setPrivacyOpen(false) })
     );
 }
 
