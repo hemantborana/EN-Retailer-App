@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { getStyleForColor } from '../types.js';
 
@@ -19,14 +20,19 @@ function ProductCard({ product, onSelect, isBestSeller }) {
             React.createElement('h3', { className: 'text-lg font-bold text-gray-800 truncate' }, product.style),
             React.createElement('p', { className: 'text-sm text-gray-500' }, priceDisplay)
         ),
-        product.colors.length > 0 && React.createElement('div', { className: 'flex items-center p-2 bg-gray-50 border-t' },
+        product.colors.length > 0 && React.createElement('div', { className: 'flex items-center p-2 bg-gray-50 border-t space-x-1.5' },
             displayedColors.map(color => {
-                const { style, isDefault } = getStyleForColor(color.code);
+                const { style: baseStyle, isDefault } = getStyleForColor(color.code);
+                const style = (baseStyle.background && (baseStyle.background.startsWith('url') || baseStyle.background.startsWith('linear')))
+                    ? { ...baseStyle, backgroundSize: 'cover', backgroundPosition: 'center' }
+                    : baseStyle;
+
                 return React.createElement('div', {
                     key: color.code,
-                    className: 'h-5 w-5 rounded-full border-2 border-white shadow-sm -ml-1 text-[8px] font-bold',
+                    title: color.name,
+                    className: 'h-6 w-6 rounded-md border border-gray-200 shadow-sm text-[8px] font-bold flex items-center justify-center',
                     style: style
-                }, isDefault ? color.code.substring(0, 3) : null);
+                }, isDefault ? React.createElement('span', { className: 'bg-white/50 px-0.5 rounded-sm' }, color.code.substring(0, 3)) : null);
             })
         )
     );

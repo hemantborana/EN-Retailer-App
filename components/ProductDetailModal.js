@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -49,15 +50,20 @@ function ProductDetailModal({ product, stock, onClose }) {
             React.createElement('div', { className: 'p-4 border-b' },
                 React.createElement('h2', { className: 'text-2xl font-bold text-gray-900' }, product.style),
                 React.createElement('p', { className: 'text-sm text-gray-600' }, product.description),
-                React.createElement('div', { className: 'flex items-center space-x-2 mt-2' },
+                React.createElement('div', { className: 'flex flex-wrap items-center gap-3 mt-3' },
                     product.colors.map(color => {
-                        const { style, isDefault } = getStyleForColor(color.code);
+                        const { style: baseStyle, isDefault } = getStyleForColor(color.code);
+                        const style = (baseStyle.background && (baseStyle.background.startsWith('url') || baseStyle.background.startsWith('linear')))
+                            ? { ...baseStyle, backgroundSize: 'cover', backgroundPosition: 'center' }
+                            : baseStyle;
+                            
                         return React.createElement('button', {
                             key: color.code,
+                            title: color.name,
                             onClick: () => setSelectedColor(color),
-                            className: `h-8 w-8 rounded-full border-2 text-[10px] font-bold ${selectedColor.code === color.code ? 'border-pink-500 ring-2 ring-pink-500' : 'border-gray-200'}`,
+                            className: `h-10 w-10 rounded-md border-2 transition-all duration-200 text-[10px] font-bold flex items-center justify-center ${selectedColor.code === color.code ? 'border-pink-500 ring-2 ring-pink-500 scale-110' : 'border-gray-300 hover:border-pink-400'}`,
                             style: style,
-                        }, isDefault ? color.code.substring(0, 3) : null);
+                        }, isDefault ? React.createElement('span', { className: 'text-gray-600 bg-white/50 rounded-sm px-1' }, color.code.substring(0, 3)) : null);
                     })
                 )
             ),
