@@ -15,10 +15,10 @@ function ProductCard({ product, onSelect, isBestSeller }) {
         React.createElement('div', { className: 'p-4 flex-grow' },
             React.createElement('div', { className: 'flex justify-between items-start gap-2' },
                  React.createElement('h3', { 
-                     className: 'text-base sm:text-lg font-bold text-gray-800 truncate' 
+                     className: 'text-base sm:text-lg font-bold text-gray-800' 
                     }, product.style),
                  isBestSeller && React.createElement('div', {
-                    className: 'bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full flex-shrink-0'
+                    className: 'bg-yellow-400 text-yellow-800 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0'
                 }, 'Best Seller')
             ),
             React.createElement('p', { 

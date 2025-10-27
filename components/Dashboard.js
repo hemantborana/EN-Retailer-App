@@ -156,13 +156,44 @@ function Dashboard() {
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const totalCartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+    const getPaginationItems = (currentPage, totalPages) => {
+        if (totalPages <= 1) return [];
+        const delta = 1;
+        const left = currentPage - delta;
+        const right = currentPage + delta + 1;
+        const range = [];
+        const rangeWithDots = [];
+        let l;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= left && i < right)) {
+                range.push(i);
+            }
+        }
+
+        for (const i of range) {
+            if (l) {
+                if (i - l === 2) {
+                    rangeWithDots.push(l + 1);
+                } else if (i - l !== 1) {
+                    rangeWithDots.push('...');
+                }
+            }
+            rangeWithDots.push(i);
+            l = i;
+        }
+        return rangeWithDots;
+    };
+
     const UserIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 1.5 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }));
     const CartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 1.5 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z' }));
     const SearchIcon = () => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill:"none", viewBox:"0 0 24 24", stroke:"currentColor", strokeWidth:2 }, React.createElement('path', { strokeLinecap:"round", strokeLinejoin:"round", d:"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" }));
     const QuickOrderIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 1.5 }, 
         React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M13 10V3L4 14h7v7l9-11h-7z' })
     );
-
+    const ChevronLeftIcon = () => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M15 19l-7-7 7-7" }));
+    const ChevronRightIcon = () => React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 2, d: "M9 5l7 7-7 7" }));
+    
     const searchInput = React.createElement('div', { className: 'relative w-full' },
         React.createElement('input', {
             type: 'text',
@@ -185,6 +216,8 @@ function Dashboard() {
     }, categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat === 'all' ? 'All Categories' : cat)));
     
     const searchContainerClasses = `md:hidden bg-white mobile-search-container ${isMobileSearchOpen ? 'max-h-40 p-4 border-b' : 'max-h-0 p-0 border-b-0'}`;
+    
+    const paginationItems = getPaginationItems(currentPage, totalPages);
 
     return React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50' },
         React.createElement('header', { className: 'bg-white/80 backdrop-blur-lg border-b border-gray-200 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
@@ -251,10 +284,30 @@ function Dashboard() {
                             isBestSeller: bestSellerStyles.has(product.style)
                         }))
                     ),
-                    totalPages > 1 && React.createElement('div', { className: 'flex justify-center items-center mt-8 space-x-4' },
-                        React.createElement('button', { onClick: () => setCurrentPage(p => Math.max(1, p - 1)), disabled: currentPage === 1, className: 'px-4 py-2 bg-white border rounded-md disabled:opacity-50 text-gray-700' }, 'Prev'),
-                        React.createElement('span', { className: 'text-gray-700' }, `Page ${currentPage} of ${totalPages}`),
-                        React.createElement('button', { onClick: () => setCurrentPage(p => Math.min(totalPages, p + 1)), disabled: currentPage === totalPages, className: 'px-4 py-2 bg-white border rounded-md disabled:opacity-50 text-gray-700' }, 'Next')
+                    totalPages > 1 && React.createElement('div', { className: 'flex justify-center items-center mt-8' },
+                        React.createElement('nav', { 'aria-label': 'Pagination', className: 'flex items-center space-x-1' },
+                            React.createElement('button', {
+                                onClick: () => setCurrentPage(p => Math.max(1, p - 1)),
+                                disabled: currentPage === 1,
+                                className: 'px-3 py-2 bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-50 transition-colors'
+                            }, React.createElement(ChevronLeftIcon)),
+                            paginationItems.map((item, index) => {
+                                if (item === '...') {
+                                    return React.createElement('span', { key: `dot-${index}`, className: 'px-3 py-2 text-gray-500' }, '...');
+                                }
+                                return React.createElement('button', {
+                                    key: item,
+                                    onClick: () => setCurrentPage(item),
+                                    'aria-current': currentPage === item ? 'page' : undefined,
+                                    className: `px-4 py-2 border rounded-md transition-colors ${currentPage === item ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`
+                                }, item);
+                            }),
+                            React.createElement('button', {
+                                onClick: () => setCurrentPage(p => Math.min(totalPages, p + 1)),
+                                disabled: currentPage === totalPages,
+                                className: 'px-3 py-2 bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-50 transition-colors'
+                            }, React.createElement(ChevronRightIcon))
+                        )
                     )
                 )
         ),

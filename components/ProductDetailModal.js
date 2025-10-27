@@ -44,6 +44,8 @@ function ProductDetailModal({ product, stock, onClose }) {
     };
 
     const variantsForColor = product.variants.filter(v => v.color === selectedColor.code);
+    const MinusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M18 12H6' }));
+    const PlusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M12 6v12m6-6H6' }));
 
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
@@ -85,18 +87,29 @@ function ProductDetailModal({ product, stock, onClose }) {
                         variantsForColor.map(variant => {
                             const stockKey = `${product.style}-${variant.color}-${variant.size}`;
                             const availableStock = stock[stockKey] || 0;
+                            const currentQuantity = Number(quantities[variant.barcode] || 0);
                             return React.createElement('tr', { key: variant.barcode, className: 'border-b' },
                                 React.createElement('td', { className: 'p-2' }, variant.size),
                                 React.createElement('td', { className: 'p-2' }, `₹${variant.mrp.toFixed(2)}`),
                                 React.createElement('td', { className: 'p-2' }, availableStock),
                                 React.createElement('td', { className: 'p-2' },
-                                    React.createElement('input', {
-                                        type: 'number',
-                                        min: 0,
-                                        value: quantities[variant.barcode] || '',
-                                        onChange: e => handleQuantityChange(variant.barcode, e.target.value),
-                                        className: 'w-20 text-center border-gray-300 rounded-md shadow-sm'
-                                    })
+                                    React.createElement('div', { className: 'flex items-center w-32' },
+                                        React.createElement('button', {
+                                            onClick: () => handleQuantityChange(variant.barcode, String(Math.max(0, currentQuantity - 1))),
+                                            className: 'p-2 text-gray-600 border border-r-0 border-gray-300 rounded-l-md hover:bg-gray-100 focus:outline-none'
+                                        }, React.createElement(MinusIcon)),
+                                        React.createElement('input', {
+                                            type: 'number',
+                                            min: 0,
+                                            value: quantities[variant.barcode] || '',
+                                            onChange: e => handleQuantityChange(variant.barcode, e.target.value),
+                                            className: 'w-full text-center border-t border-b border-gray-300 focus:outline-none focus:ring-1 focus:ring-pink-500'
+                                        }),
+                                        React.createElement('button', {
+                                            onClick: () => handleQuantityChange(variant.barcode, String(currentQuantity + 1)),
+                                            className: 'p-2 text-gray-600 border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-100 focus:outline-none'
+                                        }, React.createElement(PlusIcon))
+                                    )
                                 )
                             );
                         })
