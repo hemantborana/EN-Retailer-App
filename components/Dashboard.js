@@ -25,6 +25,7 @@ function Dashboard() {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
+    const [isMobileSearchOpen, setMobileSearchOpen] = React.useState(false);
     const [successfulOrder, setSuccessfulOrder] = React.useState(null);
     const [categories, setCategories] = React.useState([]);
     const [selectedCategory, setSelectedCategory] = React.useState('all');
@@ -183,12 +184,16 @@ function Dashboard() {
         className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white'
     }, categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat === 'all' ? 'All Categories' : cat)));
     
+    const searchContainerClasses = `md:hidden bg-white mobile-search-container ${isMobileSearchOpen ? 'max-h-40 p-4 border-b' : 'max-h-0 p-0 border-b-0'}`;
 
-    return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
+    return React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50' },
         React.createElement('header', { className: 'bg-white/80 backdrop-blur-lg border-b border-gray-200 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
             React.createElement('div', { className: 'flex items-center space-x-3' },
-                React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-12 w-auto' }),
-                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800 hidden lg:block' }, 'Kambeshwar Agencies')
+                React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-10 sm:h-12 w-auto' }),
+                 React.createElement('div', null,
+                    React.createElement('h1', { className: 'text-xl sm:text-2xl font-bold text-gray-800 hidden lg:block' }, 'Kambeshwar Agencies'),
+                    React.createElement('p', { className: 'text-sm font-semibold text-gray-700 block lg:hidden truncate max-w-[150px]', title: user.name }, user.name)
+                )
             ),
             React.createElement('div', { className: 'hidden md:flex flex-1 mx-4 max-w-lg' }, searchInput),
             React.createElement('div', { className: 'flex items-center space-x-2 sm:space-x-4' },
@@ -196,7 +201,9 @@ function Dashboard() {
                     React.createElement('p', { className: 'text-sm font-semibold text-gray-800 truncate max-w-[150px]', title: user.name }, user.name),
                     React.createElement('p', { className: 'text-xs text-gray-500' }, 'Retailer Portal')
                 ),
-                React.createElement('div', { className: 'h-8 w-px bg-gray-200 hidden sm:block' }),
+                 React.createElement('button', { onClick: () => setMobileSearchOpen(!isMobileSearchOpen), className: 'md:hidden p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors', title: 'Search' },
+                    React.createElement(SearchIcon, { className: 'h-6 w-6' })
+                ),
                 React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors', title: 'Quick Order' },
                     React.createElement(QuickOrderIcon)
                 ),
@@ -218,16 +225,13 @@ function Dashboard() {
             )
         ),
         
-        React.createElement('div', { className: 'md:hidden p-4 bg-gray-100 border-b space-y-4' },
-            searchInput,
-            React.createElement('div', { className: 'max-w-xs mx-auto'}, categoryFilter)
+        React.createElement('div', { className: searchContainerClasses },
+            isMobileSearchOpen && searchInput
         ),
 
-        React.createElement('main', { className: 'p-4 md:p-8' },
-            React.createElement('div', { className: 'mb-6 space-y-4' },
-                React.createElement('div', { className: 'hidden md:flex items-center max-w-xs' },
-                    categoryFilter
-                )
+        React.createElement('main', { className: 'flex-grow p-4 md:p-8' },
+            React.createElement('div', { className: 'mb-6 max-w-xs' },
+                categoryFilter
             ),
             loading ?
                 React.createElement('div', { className: 'flex justify-center items-center h-64' },
@@ -254,6 +258,23 @@ function Dashboard() {
                     )
                 )
         ),
+        
+        React.createElement('footer', { className: 'bg-gray-100 border-t mt-auto' },
+            React.createElement('div', { className: 'max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8' },
+                React.createElement('div', { className: 'flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0' },
+                    React.createElement('div', { className: 'flex items-center space-x-2' },
+                        React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Logo', className: 'h-8 w-auto' }),
+                        React.createElement('span', { className: 'text-sm font-semibold text-gray-700' }, 'Kambeshwar Agencies')
+                    ),
+                    React.createElement('span', { className: 'text-sm text-gray-500 text-center order-last md:order-none mt-4 md:mt-0' }, `© ${new Date().getFullYear()} Kambeshwar Agencies. All Rights Reserved.`),
+                    React.createElement('div', { className: 'flex space-x-6 text-sm text-gray-500' },
+                        React.createElement('a', { href: '#', className: 'hover:text-gray-800 hover:underline' }, 'Help Center'),
+                        React.createElement('a', { href: '#', className: 'hover:text-gray-800 hover:underline' }, 'Privacy Policy')
+                    )
+                )
+            )
+        ),
+        
         selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null) }),
         React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false), onOrderSuccess: setSuccessfulOrder }),
         isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) }),
