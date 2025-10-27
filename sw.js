@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kambeshwar-agencies-cache-v4';
+const CACHE_NAME = 'kambeshwar-agencies-cache-v5';
 const urlsToCache = [
   '/',
   '/index.html',
