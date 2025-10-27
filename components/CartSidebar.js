@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
 import { saveOrder } from '../services/firebaseService.js';
+import { useNetworkStatus } from '../context/NetworkStatusContext.js';
 
 function CartGroup({ group, updateQuantity }) {
     const [isExpanded, setIsExpanded] = React.useState(true);
@@ -52,6 +53,7 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
     const { cartItems, updateQuantity, clearCart, isLoadingCart } = useCart();
     const { user } = useAuth();
     const { showToast } = useToast();
+    const { isOnline } = useNetworkStatus();
 
     const groupedCart = React.useMemo(() => {
         return cartItems.reduce((acc, item) => {
@@ -73,6 +75,11 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
     const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const handlePlaceOrder = async () => {
+        if (!isOnline) {
+            showToast('Please connect to the internet to place your order.', 'error');
+            return;
+        }
+
         if (cartItems.length === 0) {
             showToast('Your cart is empty.', 'error');
             return;
