@@ -1,9 +1,12 @@
-
 import React from 'react';
 import { getStyleForColor } from '../types.js';
 
 function ProductCard({ product, onSelect, isBestSeller }) {
     const displayedColors = product.colors.slice(0, 5);
+
+    const priceDisplay = product.minMrp === product.maxMrp
+        ? `₹${product.minMrp.toFixed(2)}`
+        : `₹${product.minMrp.toFixed(2)} - ₹${product.maxMrp.toFixed(2)}`;
 
     return React.createElement('div', {
         onClick: () => onSelect(product),
@@ -14,7 +17,7 @@ function ProductCard({ product, onSelect, isBestSeller }) {
         }, 'Best Seller'),
         React.createElement('div', { className: 'p-4 flex-grow' },
             React.createElement('h3', { className: 'text-lg font-bold text-gray-800 truncate' }, product.style),
-            React.createElement('p', { className: 'text-sm text-gray-500' }, `₹${product.baseMrp.toFixed(2)}`)
+            React.createElement('p', { className: 'text-sm text-gray-500' }, priceDisplay)
         ),
         product.colors.length > 0 && React.createElement('div', { className: 'flex items-center p-2 bg-gray-50 border-t' },
             displayedColors.map(color => {

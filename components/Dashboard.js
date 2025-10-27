@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
 import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
@@ -45,14 +44,20 @@ function Dashboard() {
             const productsMap = itemsData.reduce((acc, item) => {
                 if (!item || !item.Style) return acc;
                 const style = item.Style;
+                const mrp = parseFloat(String(item.MRP || 0).trim().replace(/,/g, ''));
+
                 if (!acc[style]) {
                     acc[style] = {
                         style: style,
-                        baseMrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
+                        minMrp: mrp,
+                        maxMrp: mrp,
                         category: item["Cat'ry"],
                         variants: [],
                         colors: new Map(),
                     };
+                } else {
+                    acc[style].minMrp = Math.min(acc[style].minMrp, mrp);
+                    acc[style].maxMrp = Math.max(acc[style].maxMrp, mrp);
                 }
                 
                 const colorCode = String(item.Color || '').trim();
@@ -63,7 +68,7 @@ function Dashboard() {
 
                 acc[style].variants.push({
                     description: description, color: colorCode, colorName: colorName,
-                    size: item.Size, mrp: parseFloat(String(item.MRP || 0).trim().replace(/,/g, '')),
+                    size: item.Size, mrp: mrp,
                     barcode: item.Barcode
                 });
 
