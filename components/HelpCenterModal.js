@@ -11,6 +11,11 @@ const issues = {
     'Other': [],
 };
 
+const Input = ({ label, children }) => React.createElement('div', { className: 'mb-4' },
+    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, label),
+    children
+);
+
 function HelpCenterModal({ onClose }) {
     const { user } = useAuth();
     const { showToast } = useToast();
@@ -59,11 +64,6 @@ function HelpCenterModal({ onClose }) {
         showToast('Redirecting to WhatsApp to send your support request.');
     };
     
-    const Input = ({ label, children }) => React.createElement('div', { className: 'mb-4' },
-        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, label),
-        children
-    );
-
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'p-4 border-b flex justify-between items-center' },

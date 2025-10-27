@@ -9,6 +9,19 @@ const loginIssues = {
     'Other': [],
 };
 
+const Input = ({ label, children }) => React.createElement('div', { className: 'mb-4' },
+    React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, label),
+    children
+);
+
+const NewAccessForm = ({ businessName, setBusinessName, city, setCity, email, setEmail, mobile, setMobile }) => React.createElement('div', { className: 'mt-4 border-t pt-4' },
+    React.createElement('p', { className: 'text-sm font-semibold text-gray-800 mb-2' }, 'Please provide your business details:'),
+    React.createElement(Input, { label: 'Business Name' }, React.createElement('input', { type: 'text', value: businessName, onChange: e => setBusinessName(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
+    React.createElement(Input, { label: 'City' }, React.createElement('input', { type: 'text', value: city, onChange: e => setCity(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
+    React.createElement(Input, { label: 'Email' }, React.createElement('input', { type: 'email', value: email, onChange: e => setEmail(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
+    React.createElement(Input, { label: 'Mobile Number' }, React.createElement('input', { type: 'tel', value: mobile, onChange: e => setMobile(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' }))
+);
+
 function LoginHelpModal({ onClose }) {
     const { showToast } = useToast();
 
@@ -66,19 +79,6 @@ function LoginHelpModal({ onClose }) {
         onClose();
         showToast('Redirecting to WhatsApp to send your request.');
     };
-    
-    const Input = ({ label, children }) => React.createElement('div', { className: 'mb-4' },
-        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, label),
-        children
-    );
-
-    const NewAccessForm = () => React.createElement('div', { className: 'mt-4 border-t pt-4' },
-        React.createElement('p', { className: 'text-sm font-semibold text-gray-800 mb-2' }, 'Please provide your business details:'),
-        React.createElement(Input, { label: 'Business Name' }, React.createElement('input', { type: 'text', value: businessName, onChange: e => setBusinessName(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
-        React.createElement(Input, { label: 'City' }, React.createElement('input', { type: 'text', value: city, onChange: e => setCity(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
-        React.createElement(Input, { label: 'Email' }, React.createElement('input', { type: 'email', value: email, onChange: e => setEmail(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' })),
-        React.createElement(Input, { label: 'Mobile Number' }, React.createElement('input', { type: 'tel', value: mobile, onChange: e => setMobile(e.target.value), className: 'w-full px-3 py-2 border border-gray-300 rounded-md' }))
-    );
 
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
         React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
@@ -100,7 +100,12 @@ function LoginHelpModal({ onClose }) {
                 ),
 
                 mainIssue === 'Request for New Access' ? 
-                    React.createElement(NewAccessForm) :
+                    React.createElement(NewAccessForm, {
+                        businessName, setBusinessName,
+                        city, setCity,
+                        email, setEmail,
+                        mobile, setMobile
+                    }) :
                     React.createElement(React.Fragment, null,
                         subIssues.length > 0 && React.createElement(Input, { label: 'Select a Sub-Issue' },
                              React.createElement('select', {
