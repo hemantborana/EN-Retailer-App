@@ -4,14 +4,14 @@
   "description": "A professional B2B ordering platform for Kambeshwar Agencies retailers to browse products from various brands, check stock, and place orders seamlessly.",
   "icons": [
     {
-      "src": "/components/HC_LOGO_-_Copy-removebg-preview.webp",
-      "type": "image/webp",
+      "src": "/components/applogo.png",
+      "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/components/HC_LOGO_-_Copy-removebg-preview.webp",
-      "type": "image/webp",
+      "src": "/components/applogo.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
