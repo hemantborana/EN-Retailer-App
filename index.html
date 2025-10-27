@@ -8,6 +8,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -50,6 +58,11 @@
             overflow: hidden;
         }
     </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <script type="importmap">
 {
   "imports": {
@@ -66,7 +79,7 @@
 }
 </script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-gray-900">
     <div id="root"></div>
     <script type="module" src="./index.js"></script>
 </body>

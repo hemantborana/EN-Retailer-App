@@ -1,3 +1,4 @@
+
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -76,27 +77,27 @@ function OrderSuccessModal({ order, onClose }) {
 
     const renderAiSummary = () => {
         if (isSummaryLoading) {
-            return React.createElement('div', { className: 'text-sm text-gray-500 animate-pulse text-left mt-4' }, 'Generating AI summary...');
+            return React.createElement('div', { className: 'text-sm text-gray-500 dark:text-gray-400 animate-pulse text-left mt-4' }, 'Generating AI summary...');
         }
         if (aiSummary) {
             return React.createElement('div', {className: 'text-left mt-4'}, 
-                React.createElement('p', {className: 'font-semibold text-gray-700 mb-1'}, 'AI Summary:'),
-                React.createElement('p', { className: 'text-sm text-gray-600 bg-gray-100 p-3 rounded-md' }, aiSummary)
+                React.createElement('p', {className: 'font-semibold text-gray-700 dark:text-gray-300 mb-1'}, 'AI Summary:'),
+                React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-3 rounded-md' }, aiSummary)
             );
         }
         return null;
     };
     
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg text-center p-6 modal-content-enter', onClick: e => e.stopPropagation() },
-            React.createElement('div', { className: 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100' },
-                React.createElement('svg', { className: 'h-6 w-6 text-green-600', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
+        React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg text-center p-6 modal-content-enter', onClick: e => e.stopPropagation() },
+            React.createElement('div', { className: 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50' },
+                React.createElement('svg', { className: 'h-6 w-6 text-green-600 dark:text-green-400', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
                     React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M5 13l4 4L19 7' })
                 )
             ),
-            React.createElement('h3', { className: 'text-lg leading-6 font-medium text-gray-900 mt-4' }, 'Order Placed Successfully!'),
+            React.createElement('h3', { className: 'text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mt-4' }, 'Order Placed Successfully!'),
             React.createElement('div', { className: 'mt-2 px-7 py-3' },
-                React.createElement('p', { className: 'text-sm text-gray-500' }, `Your order with ID ${order.id.slice(-6)} has been placed.`),
+                React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, `Your order with ID ${order.id.slice(-6)} has been placed.`),
                 renderAiSummary()
             ),
             React.createElement('div', { className: 'items-center px-4 py-3 space-y-2 sm:space-y-0 sm:flex sm:space-x-2 justify-center' },
@@ -106,7 +107,7 @@ function OrderSuccessModal({ order, onClose }) {
                 }, 'Download PDF'),
                 React.createElement('button', {
                     onClick: onClose,
-                    className: 'w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                    className: 'w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
                 }, 'Close')
             )
         )

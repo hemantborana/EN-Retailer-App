@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     const value = { user, login, logout, loading };
     
     if (loading) {
-        return React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-100' },
+        return React.createElement('div', { className: 'flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900' },
             React.createElement('div', { className: 'spinner h-12 w-12 border-4 border-pink-500 border-t-transparent rounded-full' })
         );
     }

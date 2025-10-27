@@ -66,11 +66,11 @@ function Login() {
 
     const emailForm = React.createElement('form', { onSubmit: handleSendOTP, className: 'space-y-6' },
         React.createElement('div', null,
-            React.createElement('label', { htmlFor: 'email', className: 'block text-sm font-medium text-gray-700' }, 'Registered Email / ID'),
+            React.createElement('label', { htmlFor: 'email', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300' }, 'Registered Email / ID'),
             React.createElement('input', {
                 type: 'text', id: 'email', value: email,
                 onChange: (e) => setEmail(e.target.value),
-                className: 'w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition',
+                className: 'w-full px-4 py-3 mt-1 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400',
                 placeholder: 'Enter your email or ID',
                 required: true
             })
@@ -87,11 +87,11 @@ function Login() {
 
     const otpForm = React.createElement('div', { className: 'space-y-6' },
         React.createElement('div', { className: 'text-center' },
-            React.createElement('p', { className: 'text-sm text-gray-600' }, `Enter the OTP sent to your registered email for:`),
-            React.createElement('p', { className: 'font-bold text-gray-800' }, businessName)
+            React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-400' }, `Enter the OTP sent to your registered email for:`),
+            React.createElement('p', { className: 'font-bold text-gray-800 dark:text-gray-200' }, businessName)
         ),
         React.createElement(OtpInput, { length: 6, onComplete: handleVerifyOTP }),
-        isLoading && React.createElement('div', { className: 'flex justify-center items-center' }, React.createElement('p', { className: 'text-sm text-gray-500' }, 'Verifying...')),
+        isLoading && React.createElement('div', { className: 'flex justify-center items-center' }, React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, 'Verifying...')),
         React.createElement('div', { className: 'text-center' },
              React.createElement('button', {
                 onClick: () => { setStep('email'); setError(''); setMessage(''); },
@@ -101,17 +101,17 @@ function Login() {
     );
 
     return React.createElement(React.Fragment, null,
-        React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 p-4' },
-            React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg' },
+        React.createElement('div', { className: 'flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4' },
+            React.createElement('div', { className: 'w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg' },
                 React.createElement('div', { className: 'text-center' },
                     React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-20 w-auto mx-auto mb-4' }),
-                    React.createElement('h1', { className: 'text-2xl font-bold text-gray-800' }, 'Kambeshwar Agencies'),
-                    React.createElement('p', { className: 'mt-2 text-gray-500' }, 
+                    React.createElement('h1', { className: 'text-2xl font-bold text-gray-800 dark:text-gray-100' }, 'Kambeshwar Agencies'),
+                    React.createElement('p', { className: 'mt-2 text-gray-500 dark:text-gray-400' }, 
                         step === 'email' ? 'Retailer Ordering Portal' : 'OTP Verification'
                     )
                 ),
-                error && React.createElement('div', { className: 'p-3 text-center text-sm text-red-800 bg-red-100 rounded-lg', role: 'alert' }, error),
-                message && !error && React.createElement('div', { className: 'p-3 text-center text-sm text-green-800 bg-green-100 rounded-lg', role: 'status' }, message),
+                error && React.createElement('div', { className: 'p-3 text-center text-sm text-red-800 bg-red-100 dark:bg-red-200 dark:text-red-900 rounded-lg', role: 'alert' }, error),
+                message && !error && React.createElement('div', { className: 'p-3 text-center text-sm text-green-800 bg-green-100 dark:bg-green-200 dark:text-green-900 rounded-lg', role: 'status' }, message),
                 step === 'email' ? emailForm : otpForm,
                  React.createElement('div', { className: 'text-center pt-4' },
                     React.createElement('button', {

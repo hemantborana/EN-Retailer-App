@@ -59,7 +59,7 @@ function OtpInput({ length = 6, onComplete }) {
                 type: 'text',
                 inputMode: 'numeric',
                 maxLength: 1,
-                className: 'w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition',
+                className: 'w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition dark:bg-gray-700 dark:text-white dark:border-gray-600',
                 value: data,
                 onChange: e => handleChange(e.target, index),
                 onKeyDown: e => handleKeyDown(e, index),

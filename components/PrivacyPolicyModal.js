@@ -3,22 +3,22 @@ import React from 'react';
 
 function PrivacyPolicyModal({ onClose }) {
     const PolicySection = ({ title, children }) => React.createElement('div', { className: 'mb-4' },
-        React.createElement('h3', { className: 'text-lg font-semibold text-gray-800 mb-2' }, title),
-        React.createElement('div', { className: 'space-y-2 text-gray-600' }, children)
+        React.createElement('h3', { className: 'text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2' }, title),
+        React.createElement('div', { className: 'space-y-2 text-gray-600 dark:text-gray-300' }, children)
     );
 
     return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
-            React.createElement('div', { className: 'p-4 border-b flex justify-between items-center' },
-                React.createElement('h2', { className: 'text-xl font-bold text-gray-900' }, 'Privacy Policy'),
-                React.createElement('button', { onClick: onClose, className: 'text-gray-500 hover:text-gray-800' },
+        React.createElement('div', { className: 'bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
+            React.createElement('div', { className: 'p-4 border-b dark:border-gray-700 flex justify-between items-center' },
+                React.createElement('h2', { className: 'text-xl font-bold text-gray-900 dark:text-gray-100' }, 'Privacy Policy'),
+                React.createElement('button', { onClick: onClose, className: 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200' },
                     React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-6 w-6', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
                         React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M6 18L18 6M6 6l12 12' })
                     )
                 )
             ),
             React.createElement('div', { className: 'flex-grow overflow-y-auto p-6 text-sm' },
-                React.createElement('p', { className: 'mb-4 text-gray-600' }, `Last updated: ${new Date().toLocaleDateString()}`),
+                React.createElement('p', { className: 'mb-4 text-gray-600 dark:text-gray-400' }, `Last updated: ${new Date().toLocaleDateString()}`),
                 
                 React.createElement(PolicySection, { title: "1. Introduction" },
                     React.createElement('p', null, "Welcome to the Kambeshwar Agencies Ordering App. We are committed to protecting the privacy and security of our users' information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application.")
@@ -55,7 +55,7 @@ function PrivacyPolicyModal({ onClose }) {
                     React.createElement('p', null, "If you have questions or comments about this Privacy Policy, please contact us through the Help Center feature in the application.")
                 )
             ),
-             React.createElement('div', { className: 'p-4 border-t flex justify-end' },
+             React.createElement('div', { className: 'p-4 border-t dark:border-gray-700 flex justify-end' },
                 React.createElement('button', { onClick: onClose, className: 'px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700' }, 'Close')
             )
         )

@@ -13,6 +13,7 @@ import OrderSuccessModal from './OrderSuccessModal.js';
 import QuickOrderModal from './QuickOrderModal.js';
 import HelpCenterModal from './HelpCenterModal.js';
 import PrivacyPolicyModal from './PrivacyPolicyModal.js';
+import ProfileModal from './ProfileModal.js';
 
 function Dashboard() {
     const { user, logout } = useAuth();
@@ -27,6 +28,7 @@ function Dashboard() {
     const [isQuickOrderOpen, setQuickOrderOpen] = React.useState(false);
     const [isHelpOpen, setHelpOpen] = React.useState(false);
     const [isPrivacyOpen, setPrivacyOpen] = React.useState(false);
+    const [isProfileOpen, setProfileOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [currentPage, setCurrentPage] = React.useState(1);
     const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -203,61 +205,62 @@ function Dashboard() {
         React.createElement('input', {
             type: 'text',
             placeholder: 'Search by style, color, or description...',
-            className: 'w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500',
+            className: 'w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white',
             value: searchTerm,
             onChange: e => setSearchTerm(e.target.value),
             onKeyDown: e => e.key === 'Enter' && handleSearch()
         }),
         React.createElement('button', {
             onClick: handleSearch,
-            className: 'absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-500 hover:text-pink-600 transition-colors'
+            className: 'absolute inset-y-0 right-0 flex items-center justify-center w-12 text-gray-500 hover:text-pink-600 dark:text-gray-400 dark:hover:text-pink-500 transition-colors'
         }, React.createElement(SearchIcon))
     );
 
     const categoryFilter = React.createElement('select', {
         value: selectedCategory,
         onChange: e => { setSelectedCategory(e.target.value); setCurrentPage(1); },
-        className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white'
+        className: 'w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white'
     }, categories.map(cat => React.createElement('option', { key: cat, value: cat }, cat === 'all' ? 'All Categories' : cat)));
     
-    const searchContainerClasses = `md:hidden bg-white mobile-search-container ${isMobileSearchOpen ? 'max-h-40 p-4 border-b' : 'max-h-0 p-0 border-b-0'}`;
+    const searchContainerClasses = `md:hidden bg-white dark:bg-gray-800 mobile-search-container ${isMobileSearchOpen ? 'max-h-40 p-4 border-b dark:border-gray-700' : 'max-h-0 p-0 border-b-0'}`;
     
     const paginationItems = getPaginationItems(currentPage, totalPages);
 
-    return React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50' },
-        React.createElement('header', { className: 'bg-white/80 backdrop-blur-lg border-b border-gray-200 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
+    return React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200' },
+        React.createElement('header', { className: 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
             React.createElement('div', { className: 'flex items-center space-x-3' },
                 React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-10 sm:h-12 w-auto' }),
                  React.createElement('div', null,
-                    React.createElement('h1', { className: 'text-xl sm:text-2xl font-bold text-gray-800 hidden lg:block' }, 'Kambeshwar Agencies'),
-                    React.createElement('p', { className: 'text-sm font-semibold text-gray-700 block lg:hidden truncate max-w-[150px]', title: user.name }, user.name)
+                    React.createElement('h1', { className: 'text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 hidden lg:block' }, 'Kambeshwar Agencies'),
+                    React.createElement('p', { className: 'text-sm font-semibold text-gray-700 dark:text-gray-200 block lg:hidden truncate max-w-[150px]', title: user.name }, user.name)
                 )
             ),
             React.createElement('div', { className: 'hidden md:flex flex-1 mx-4 max-w-lg' }, searchInput),
             React.createElement('div', { className: 'flex items-center space-x-2 sm:space-x-4' },
                 React.createElement('div', { className: 'hidden sm:block text-right' },
-                    React.createElement('p', { className: 'text-sm font-semibold text-gray-800 truncate max-w-[150px]', title: user.name }, user.name),
-                    React.createElement('p', { className: 'text-xs text-gray-500' }, 'Retailer Portal')
+                    React.createElement('p', { className: 'text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[150px]', title: user.name }, user.name),
+                    React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Retailer Portal')
                 ),
-                 React.createElement('button', { onClick: () => setMobileSearchOpen(!isMobileSearchOpen), className: 'md:hidden p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors', title: 'Search' },
+                 React.createElement('button', { onClick: () => setMobileSearchOpen(!isMobileSearchOpen), className: 'md:hidden p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-600 transition-colors', title: 'Search' },
                     React.createElement(SearchIcon, { className: 'h-6 w-6' })
                 ),
-                React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors', title: 'Quick Order' },
+                React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-600 transition-colors', title: 'Quick Order' },
                     React.createElement(QuickOrderIcon)
                 ),
                 React.createElement('div', { className: 'relative' },
-                    React.createElement('button', { onClick: () => setCartOpen(true), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors' }, React.createElement(CartIcon)),
-                    totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-1 -right-1 bg-pink-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white' }, totalCartQuantity)
+                    React.createElement('button', { onClick: () => setCartOpen(true), className: 'p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-600 transition-colors' }, React.createElement(CartIcon)),
+                    totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-1 -right-1 bg-pink-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white dark:border-gray-800' }, totalCartQuantity)
                 ),
                 React.createElement('div', { className: 'relative' },
-                    React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors' }, React.createElement(UserIcon)),
-                    userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-20 ring-1 ring-black ring-opacity-5' },
-                         React.createElement('div', { className: 'sm:hidden px-4 py-3 border-b' },
-                            React.createElement('p', { className: 'text-sm font-semibold text-gray-800 truncate' }, user.name),
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Retailer Portal')
+                    React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-600 transition-colors' }, React.createElement(UserIcon)),
+                    userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-56 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20 ring-1 ring-black ring-opacity-5' },
+                         React.createElement('div', { className: 'sm:hidden px-4 py-3 border-b dark:border-gray-600' },
+                            React.createElement('p', { className: 'text-sm font-semibold text-gray-800 dark:text-gray-100 truncate' }, user.name),
+                            React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Retailer Portal')
                         ),
-                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHistoryOpen(true); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Order History'),
-                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); logout(); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Logout')
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setProfileOpen(true); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600' }, 'My Profile'),
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHistoryOpen(true); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600' }, 'Order History'),
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); logout(); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600' }, 'Logout')
                     )
                 )
             )
@@ -278,7 +281,7 @@ function Dashboard() {
                 React.createElement(React.Fragment, null,
                     paginatedProducts.length === 0 ? 
                     React.createElement('div', {className: 'text-center py-10'},
-                         React.createElement('p', {className: 'text-gray-500'}, 'No products match your criteria.')
+                         React.createElement('p', {className: 'text-gray-500 dark:text-gray-400'}, 'No products match your criteria.')
                     )
                     :
                     React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6' },
@@ -294,40 +297,40 @@ function Dashboard() {
                             React.createElement('button', {
                                 onClick: () => setCurrentPage(p => Math.max(1, p - 1)),
                                 disabled: currentPage === 1,
-                                className: 'px-3 py-2 bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-50 transition-colors'
+                                className: 'px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
                             }, React.createElement(ChevronLeftIcon)),
                             paginationItems.map((item, index) => {
                                 if (item === '...') {
-                                    return React.createElement('span', { key: `dot-${index}`, className: 'px-3 py-2 text-gray-500' }, '...');
+                                    return React.createElement('span', { key: `dot-${index}`, className: 'px-3 py-2 text-gray-500 dark:text-gray-400' }, '...');
                                 }
                                 return React.createElement('button', {
                                     key: item,
                                     onClick: () => setCurrentPage(item),
                                     'aria-current': currentPage === item ? 'page' : undefined,
-                                    className: `px-4 py-2 border rounded-md transition-colors ${currentPage === item ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`
+                                    className: `px-4 py-2 border rounded-md transition-colors ${currentPage === item ? 'bg-pink-600 text-white border-pink-600' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'}`
                                 }, item);
                             }),
                             React.createElement('button', {
                                 onClick: () => setCurrentPage(p => Math.min(totalPages, p + 1)),
                                 disabled: currentPage === totalPages,
-                                className: 'px-3 py-2 bg-white border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 hover:bg-gray-50 transition-colors'
+                                className: 'px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
                             }, React.createElement(ChevronRightIcon))
                         )
                     )
                 )
         ),
         
-        React.createElement('footer', { className: 'bg-gray-100 border-t mt-auto' },
+        React.createElement('footer', { className: 'bg-gray-100 dark:bg-gray-800 border-t dark:border-gray-700 mt-auto' },
             React.createElement('div', { className: 'max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8' },
                 React.createElement('div', { className: 'flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0' },
                     React.createElement('div', { className: 'flex items-center space-x-2' },
                         React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Logo', className: 'h-8 w-auto' }),
-                        React.createElement('span', { className: 'text-sm font-semibold text-gray-700' }, 'Kambeshwar Agencies')
+                        React.createElement('span', { className: 'text-sm font-semibold text-gray-700 dark:text-gray-200' }, 'Kambeshwar Agencies')
                     ),
-                    React.createElement('span', { className: 'text-sm text-gray-500 text-center order-last md:order-none mt-4 md:mt-0' }, `© ${new Date().getFullYear()} Kambeshwar Agencies. All Rights Reserved.`),
-                    React.createElement('div', { className: 'flex space-x-6 text-sm text-gray-500' },
-                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHelpOpen(true); }, className: 'hover:text-gray-800 hover:underline' }, 'Help Center'),
-                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setPrivacyOpen(true); }, className: 'hover:text-gray-800 hover:underline' }, 'Privacy Policy')
+                    React.createElement('span', { className: 'text-sm text-gray-500 dark:text-gray-400 text-center order-last md:order-none mt-4 md:mt-0' }, `© ${new Date().getFullYear()} Kambeshwar Agencies. All Rights Reserved.`),
+                    React.createElement('div', { className: 'flex space-x-6 text-sm text-gray-500 dark:text-gray-400' },
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHelpOpen(true); }, className: 'hover:text-gray-800 dark:hover:text-gray-200 hover:underline' }, 'Help Center'),
+                        React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setPrivacyOpen(true); }, className: 'hover:text-gray-800 dark:hover:text-gray-200 hover:underline' }, 'Privacy Policy')
                     )
                 )
             )
@@ -339,7 +342,8 @@ function Dashboard() {
         successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) }),
         isQuickOrderOpen && React.createElement(QuickOrderModal, { products: products, onClose: () => setQuickOrderOpen(false) }),
         isHelpOpen && React.createElement(HelpCenterModal, { onClose: () => setHelpOpen(false) }),
-        isPrivacyOpen && React.createElement(PrivacyPolicyModal, { onClose: () => setPrivacyOpen(false) })
+        isPrivacyOpen && React.createElement(PrivacyPolicyModal, { onClose: () => setPrivacyOpen(false) }),
+        isProfileOpen && React.createElement(ProfileModal, { onClose: () => setProfileOpen(false) })
     );
 }
 

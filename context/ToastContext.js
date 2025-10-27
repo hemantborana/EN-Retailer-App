@@ -14,10 +14,11 @@ export const ToastProvider = ({ children }) => {
     const Toast = () => {
         if (!toast) return null;
 
-        const bgColor = toast.type === 'success' ? 'bg-green-500' : 'bg-red-500';
+        const successClasses = 'bg-green-500 dark:bg-green-600';
+        const errorClasses = 'bg-red-500 dark:bg-red-600';
         
         return React.createElement('div', {
-            className: `fixed bottom-5 right-5 ${bgColor} text-white py-2 px-4 rounded-lg shadow-lg text-sm z-50 toast-enter`
+            className: `fixed bottom-5 right-5 ${toast.type === 'success' ? successClasses : errorClasses} text-white py-2 px-4 rounded-lg shadow-lg text-sm z-50 toast-enter`
         }, toast.message);
     };
 
