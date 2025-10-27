@@ -17,7 +17,7 @@ function OrderSuccessModal({ order, onClose }) {
     const randomSummary = React.useMemo(() => {
         const randomIndex = Math.floor(Math.random() * inspiringSummaries.length);
         return inspiringSummaries[randomIndex];
-    }, [order.id]); // Re-calculates if a different order is shown in the same modal instance
+    }, [order.referenceNumber]);
 
     const generatePdf = () => {
         const doc = new jsPDF();
@@ -30,15 +30,16 @@ function OrderSuccessModal({ order, onClose }) {
 
         // Order Details
         doc.setFontSize(10);
-        doc.text(`Order ID: ${order.id.slice(-6)}`, 14, 40);
-        doc.text(`Date: ${new Date(order.timestamp).toLocaleString()}`, 14, 45);
-        doc.text(`Retailer ID: ${order.retailerId}`, 14, 50);
+        doc.text(`Order Reference: #${order.referenceNumber}`, 14, 40);
+        doc.text(`Date: ${new Date(order.dateTime).toLocaleString()}`, 14, 45);
+        doc.text(`Retailer: ${order.partyName} (${order.retailerId})`, 14, 50);
 
         // Items Table
         const tableColumn = ["Style", "Description", "Color", "Size", "Qty", "MRP", "Total"];
         const tableRows = [];
 
-        order.items.forEach(item => {
+        const itemsForPdf = order.lineItems || order.items;
+        itemsForPdf.forEach(item => {
             const itemData = [
                 item.style,
                 item.description,
@@ -62,9 +63,14 @@ function OrderSuccessModal({ order, onClose }) {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text(`Total Amount: ₹${order.totalAmount.toFixed(2)}`, 14, finalY + 10);
+        if (order.orderNote) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Note: ${order.orderNote}`, 14, finalY + 16);
+        }
 
         // Save PDF
-        doc.save(`order_${order.id.slice(-6)}.pdf`);
+        doc.save(`order_${order.referenceNumber}.pdf`);
     };
 
     const renderSummary = () => {
@@ -82,7 +88,7 @@ function OrderSuccessModal({ order, onClose }) {
             ),
             React.createElement('h3', { className: 'text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mt-4' }, 'Order Placed Successfully!'),
             React.createElement('div', { className: 'mt-2 px-7 py-3' },
-                React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, `Your order with ID ${order.id.slice(-6)} has been placed.`),
+                React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, `Your order with Reference #${order.referenceNumber} has been placed.`),
                 renderSummary()
             ),
             React.createElement('div', { className: 'items-center px-4 py-3 space-y-2 sm:space-y-0 sm:flex sm:space-x-2 justify-center' },

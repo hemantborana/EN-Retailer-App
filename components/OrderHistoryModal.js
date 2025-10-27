@@ -39,11 +39,11 @@ function OrderHistoryModal({ onClose }) {
                 orders.length === 0 ? React.createElement('p', {className: 'text-gray-500 dark:text-gray-400'}, 'You have no past orders.') :
                 React.createElement('div', { className: 'space-y-4 text-gray-900 dark:text-gray-200' },
                     orders.map(order =>
-                        React.createElement('div', { key: order.id, className: 'border dark:border-gray-700 rounded-lg p-4' },
+                        React.createElement('div', { key: order.id || order.referenceNumber, className: 'border dark:border-gray-700 rounded-lg p-4' },
                             React.createElement('div', { className: 'flex justify-between items-start mb-2' },
                                 React.createElement('div', null,
-                                    React.createElement('p', { className: 'font-bold' }, `Order ID: ${order.id.slice(-6)}`),
-                                    React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, new Date(order.timestamp).toLocaleString())
+                                    React.createElement('p', { className: 'font-bold' }, `Order Ref: #${order.referenceNumber || order.id.slice(-6)}`),
+                                    React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, new Date(order.dateTime || order.timestamp).toLocaleString())
                                 ),
                                 React.createElement('div', { className: 'text-right' },
                                     React.createElement('p', { className: 'font-bold text-lg' }, `₹${order.totalAmount.toFixed(2)}`),
@@ -51,7 +51,7 @@ function OrderHistoryModal({ onClose }) {
                                 )
                             ),
                             React.createElement('div', { className: 'text-sm space-y-1' },
-                                order.items.map(item =>
+                                (order.lineItems || order.items).map(item =>
                                     React.createElement('div', { key: item.barcode, className: 'flex justify-between' },
                                         React.createElement('span', null, `${item.description} (x${item.quantity})`),
                                         React.createElement('span', null, `₹${(item.mrp * item.quantity).toFixed(2)}`)

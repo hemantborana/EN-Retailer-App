@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, get, push, set, query, orderByChild, equalTo } from "firebase/database";
+import { getDatabase, ref, get, set, query, orderByChild, equalTo, runTransaction } from "firebase/database";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBRV-i_70Xdk86bNuQQ43jiYkRNCXGvvyo",
@@ -42,20 +42,34 @@ export const fetchStock = async () => {
     return fetchDataAsArray('stock');
 };
 
+export const getNextReferenceNumber = async () => {
+    const counterRef = ref(database, 'referenceNumbers/counter');
+    const transactionResult = await runTransaction(counterRef, (currentData) => {
+        return (currentData || 0) + 1;
+    });
+
+    if (transactionResult.committed) {
+        // The value in the snapshot is the new, incremented value.
+        // The number for our order is the one *before* the increment.
+        return transactionResult.snapshot.val() - 1;
+    } else {
+        throw new Error("Could not retrieve a unique order reference number. Please try again.");
+    }
+};
+
 export const saveOrder = async (order) => {
-    const ordersRef = ref(database, 'hbgosample/orders');
-    const newOrderRef = push(ordersRef);
-    await set(newOrderRef, { ...order, id: newOrderRef.key });
-    return newOrderRef.key;
+    const orderRef = ref(database, `unapprovedorders/${order.referenceNumber}`);
+    await set(orderRef, order);
+    return order.referenceNumber;
 };
 
 export const fetchOrders = async (retailerId) => {
-    const ordersRef = ref(database, 'hbgosample/orders');
+    const ordersRef = ref(database, 'unapprovedorders');
     const q = query(ordersRef, orderByChild('retailerId'), equalTo(retailerId));
     const snapshot = await get(q);
     if (snapshot.exists()) {
         const orders = snapshot.val();
-        return Object.values(orders).sort((a, b) => b.timestamp - a.timestamp);
+        return Object.values(orders).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
     }
     return [];
 };

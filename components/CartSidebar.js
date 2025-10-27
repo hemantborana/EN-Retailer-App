@@ -3,7 +3,7 @@ import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useToast } from '../context/ToastContext.js';
-import { saveOrder } from '../services/firebaseService.js';
+import { saveOrder, getNextReferenceNumber } from '../services/firebaseService.js';
 import { useNetworkStatus } from '../context/NetworkStatusContext.js';
 
 function CartGroup({ group, updateQuantity }) {
@@ -54,6 +54,8 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
     const { user } = useAuth();
     const { showToast } = useToast();
     const { isOnline } = useNetworkStatus();
+    const [orderNote, setOrderNote] = React.useState('');
+    const [isPlacingOrder, setIsPlacingOrder] = React.useState(false);
 
     const groupedCart = React.useMemo(() => {
         return cartItems.reduce((acc, item) => {
@@ -73,6 +75,7 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
     }, [cartItems]);
 
     const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const totalAmount = cartItems.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
 
     const handlePlaceOrder = async () => {
         if (!isOnline) {
@@ -85,17 +88,48 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
             return;
         }
 
-        const totalAmount = cartItems.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
-        const order = { retailerId: user.id, timestamp: Date.now(), items: cartItems, totalAmount: totalAmount, status: 'Pending' };
-
+        setIsPlacingOrder(true);
         try {
-            const orderId = await saveOrder(order);
-            onOrderSuccess({ ...order, id: orderId });
+            const referenceNumber = await getNextReferenceNumber();
+            const paddedReferenceNumber = String(referenceNumber).padStart(3, '0');
+
+            const transformedItems = cartItems.reduce((acc, item) => {
+                let styleEntry = acc.find(entry => entry.name === item.style);
+                if (!styleEntry) {
+                    styleEntry = { name: item.style, colors: {} };
+                    acc.push(styleEntry);
+                }
+                if (!styleEntry.colors[item.color]) {
+                    styleEntry.colors[item.color] = {};
+                }
+                styleEntry.colors[item.color][item.size] = item.quantity;
+                return acc;
+            }, []);
+
+            const order = {
+                referenceNumber: paddedReferenceNumber,
+                partyName: user.name,
+                retailerId: user.id,
+                city: user.city || '',
+                dateTime: new Date().toISOString(),
+                items: transformedItems,
+                lineItems: cartItems,
+                status: 'Approval Pending',
+                totalQuantity: totalQuantity,
+                totalAmount: totalAmount,
+                orderNote: orderNote.trim()
+            };
+
+            await saveOrder(order);
+            onOrderSuccess(order);
             clearCart();
+            setOrderNote('');
             onClose();
         } catch (error) {
-            showToast('Failed to place order.', 'error');
+            showToast(error.message || 'Failed to place order.', 'error');
             console.error('Order placement error:', error);
+        } finally {
+            setIsPlacingOrder(false);
         }
     };
 
@@ -141,17 +175,32 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
                         )
                     ),
                     React.createElement('div', { className: 'p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800' },
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { htmlFor: 'orderNote', className: 'block text-sm font-medium text-gray-700 dark:text-gray-300' }, 'Order Note (Optional)'),
+                            React.createElement('textarea', {
+                                id: 'orderNote',
+                                rows: 2,
+                                value: orderNote,
+                                onChange: e => setOrderNote(e.target.value),
+                                className: 'mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm resize-none dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                                placeholder: 'e.g., Rush delivery needed'
+                            })
+                        ),
                         React.createElement('div', { className: 'space-y-2 mb-4' },
                             React.createElement('div', { className: 'flex justify-between text-gray-600 dark:text-gray-300' },
-                                React.createElement('span', { className: 'font-bold' }, 'Total Items'),
-                                React.createElement('span', { className: 'font-bold' }, totalQuantity)
+                                React.createElement('span', null, 'Total Quantity'),
+                                React.createElement('span', null, totalQuantity)
+                            ),
+                             React.createElement('div', { className: 'flex justify-between text-gray-800 dark:text-gray-100' },
+                                React.createElement('span', { className: 'font-bold' }, 'Total Amount'),
+                                React.createElement('span', { className: 'font-bold' }, `₹${totalAmount.toFixed(2)}`)
                             )
                         ),
                         React.createElement('button', {
                             onClick: handlePlaceOrder,
-                            className: 'w-full bg-pink-600 text-white py-3 rounded-md hover:bg-pink-700 transition disabled:bg-gray-400',
-                            disabled: cartItems.length === 0
-                        }, 'Place Order'),
+                            className: 'w-full bg-pink-600 text-white py-3 rounded-md hover:bg-pink-700 transition disabled:bg-pink-400 disabled:cursor-not-allowed flex justify-center items-center',
+                            disabled: cartItems.length === 0 || isPlacingOrder
+                        }, isPlacingOrder ? 'Placing Order...' : 'Place Order'),
                         React.createElement('button', {
                             onClick: handleClearCart,
                             className: 'w-full text-center text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 mt-3'
