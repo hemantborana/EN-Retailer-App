@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { fetchItems, fetchStock } from '../services/firebaseService.js';
 import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
@@ -179,25 +180,32 @@ function Dashboard() {
     
 
     return React.createElement('div', { className: 'min-h-screen bg-gray-50' },
-        React.createElement('header', { className: 'bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-30' },
-            React.createElement('div', { className: 'flex items-center space-x-2' },
-                React.createElement('div', { className: 'flex items-center justify-center w-10 h-10 bg-pink-600 rounded-full' },
-                    React.createElement('span', { className: 'text-xl font-bold text-white' }, 'KA')
-                ),
-                React.createElement('h1', { className: 'text-xl font-bold text-gray-800 hidden sm:block' }, 'Kambeshwar Agencies')
+        React.createElement('header', { className: 'bg-white/80 backdrop-blur-lg border-b border-gray-200 px-4 sm:px-6 py-2 flex justify-between items-center sticky top-0 z-30' },
+            React.createElement('div', { className: 'flex items-center space-x-3' },
+                React.createElement('img', { src: 'components/HC_LOGO_-_Copy-removebg-preview.webp', alt: 'Kambeshwar Agencies Logo', className: 'h-12 w-auto' }),
+                React.createElement('h1', { className: 'text-2xl font-bold text-gray-800 hidden lg:block' }, 'Kambeshwar Agencies')
             ),
             React.createElement('div', { className: 'hidden md:flex flex-1 mx-4 max-w-lg' }, searchInput),
-            React.createElement('div', { className: 'flex items-center space-x-4' },
-                React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'text-gray-600 hover:text-pink-600', title: 'Quick Order' },
+            React.createElement('div', { className: 'flex items-center space-x-2 sm:space-x-4' },
+                React.createElement('div', { className: 'hidden sm:block text-right' },
+                    React.createElement('p', { className: 'text-sm font-semibold text-gray-800 truncate max-w-[150px]', title: user.name }, user.name),
+                    React.createElement('p', { className: 'text-xs text-gray-500' }, 'Retailer Portal')
+                ),
+                React.createElement('div', { className: 'h-8 w-px bg-gray-200 hidden sm:block' }),
+                React.createElement('button', { onClick: () => setQuickOrderOpen(true), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors', title: 'Quick Order' },
                     React.createElement(QuickOrderIcon)
                 ),
                 React.createElement('div', { className: 'relative' },
-                    React.createElement('button', { onClick: () => setCartOpen(true), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(CartIcon)),
-                    totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center' }, totalCartQuantity)
+                    React.createElement('button', { onClick: () => setCartOpen(true), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors' }, React.createElement(CartIcon)),
+                    totalCartQuantity > 0 && React.createElement('span', { className: 'absolute -top-1 -right-1 bg-pink-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white' }, totalCartQuantity)
                 ),
                 React.createElement('div', { className: 'relative' },
-                    React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'text-gray-600 hover:text-pink-600' }, React.createElement(UserIcon)),
-                    userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20' },
+                    React.createElement('button', { onClick: () => setUserMenuOpen(!userMenuOpen), className: 'p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-pink-600 transition-colors' }, React.createElement(UserIcon)),
+                    userMenuOpen && React.createElement('div', { className: 'absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-20 ring-1 ring-black ring-opacity-5' },
+                         React.createElement('div', { className: 'sm:hidden px-4 py-3 border-b' },
+                            React.createElement('p', { className: 'text-sm font-semibold text-gray-800 truncate' }, user.name),
+                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Retailer Portal')
+                        ),
                         React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); setHistoryOpen(true); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Order History'),
                         React.createElement('a', { href: '#', onClick: (e) => { e.preventDefault(); logout(); setUserMenuOpen(false); }, className: 'block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100' }, 'Logout')
                     )
