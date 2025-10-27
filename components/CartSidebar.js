@@ -8,7 +8,6 @@ function CartGroup({ group, updateQuantity }) {
     const [isExpanded, setIsExpanded] = React.useState(true);
 
     const groupTotalQuantity = group.variants.reduce((sum, v) => sum + v.quantity, 0);
-    const groupTotalAmount = group.variants.reduce((sum, v) => sum + v.mrp * v.quantity, 0);
     
     const MinusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M20 12H4' }));
     const PlusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M12 4v16m8-8H4' }));
@@ -20,13 +19,12 @@ function CartGroup({ group, updateQuantity }) {
             React.createElement('div', { className: 'flex justify-between items-center' },
                 React.createElement('div', null,
                     React.createElement('p', { className: 'font-bold text-gray-800' }, group.style),
-                    React.createElement('p', { className: 'text-sm text-gray-600' }, `${group.color} - ${group.description}`)
+                    React.createElement('p', { className: 'text-sm text-gray-600' }, group.color)
                 ),
                 React.createElement(ChevronIcon)
             ),
              React.createElement('div', { className: 'flex justify-between items-center mt-2 text-sm text-gray-500' },
-                React.createElement('span', null, `Total Qty: ${groupTotalQuantity}`),
-                React.createElement('span', {className: 'font-semibold'}, `Subtotal: ₹${groupTotalAmount.toFixed(2)}`)
+                React.createElement('span', null, `Total Qty: ${groupTotalQuantity}`)
             )
         ),
         isExpanded && React.createElement('div', { className: 'bg-white px-4 pb-2' },
@@ -40,7 +38,6 @@ function CartGroup({ group, updateQuantity }) {
                             React.createElement('button', { onClick: () => updateQuantity(item.barcode, item.quantity + 1), className: 'p-2 text-gray-600 hover:bg-gray-100 rounded-r-md' }, React.createElement(PlusIcon))
                         ),
                         React.createElement('div', { className: 'flex items-center space-x-2' },
-                            React.createElement('p', { className: 'font-semibold text-gray-800 w-20 text-right' }, `₹${(item.mrp * item.quantity).toFixed(2)}`),
                             React.createElement('button', { onClick: () => updateQuantity(item.barcode, 0), className: 'p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full' }, React.createElement(TrashIcon))
                         )
                     )
@@ -72,7 +69,6 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
         }, {});
     }, [cartItems]);
 
-    const totalAmount = cartItems.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
     const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const handlePlaceOrder = async () => {
@@ -81,6 +77,7 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
             return;
         }
 
+        const totalAmount = cartItems.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
         const order = { retailerId: user.id, timestamp: Date.now(), items: cartItems, totalAmount: totalAmount, status: 'Pending' };
 
         try {
@@ -133,12 +130,8 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
                     React.createElement('div', { className: 'p-4 border-t bg-gray-50' },
                         React.createElement('div', { className: 'space-y-2 mb-4' },
                             React.createElement('div', { className: 'flex justify-between text-gray-600' },
-                                React.createElement('span', null, 'Subtotal'),
-                                React.createElement('span', null, `₹${totalAmount.toFixed(2)}`)
-                            ),
-                            React.createElement('div', { className: 'flex justify-between text-gray-600' },
-                                React.createElement('span', null, 'Total Items'),
-                                React.createElement('span', null, totalQuantity)
+                                React.createElement('span', { className: 'font-bold' }, 'Total Items'),
+                                React.createElement('span', { className: 'font-bold' }, totalQuantity)
                             )
                         ),
                         React.createElement('button', {
