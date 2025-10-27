@@ -10,7 +10,7 @@ function ProductCard({ product, onSelect, isBestSeller }) {
 
     return React.createElement('div', {
         onClick: () => onSelect(product),
-        className: 'relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer overflow-hidden flex flex-col'
+        className: 'relative bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col'
     },
         isBestSeller && React.createElement('div', {
             className: 'absolute top-2 right-2 bg-yellow-400 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full z-10'

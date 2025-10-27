@@ -44,8 +44,8 @@ function ProductDetailModal({ product, stock, onClose }) {
 
     const variantsForColor = product.variants.filter(v => v.color === selectedColor.code);
 
-    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
+    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
+        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'p-4 border-b' },
                 React.createElement('h2', { className: 'text-2xl font-bold text-gray-900' }, product.style),
                 React.createElement('p', { className: 'text-sm text-gray-600' }, product.description),

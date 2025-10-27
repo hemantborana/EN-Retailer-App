@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -10,10 +9,10 @@ function CartGroup({ group, updateQuantity }) {
 
     const groupTotalQuantity = group.variants.reduce((sum, v) => sum + v.quantity, 0);
     
-    const MinusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M20 12H4' }));
-    const PlusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M12 4v16m8-8H4' }));
-    const TrashIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-5 w-5', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' }));
-    const ChevronIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: `h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`, fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M19 9l-7 7-7-7' }));
+    const MinusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M18 12H6' }));
+    const PlusIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-4 w-4', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M12 6v12m6-6H6' }));
+    const TrashIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: 'h-5 w-5', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 1.5 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' }));
+    const ChevronIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: `h-5 w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`, fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', strokeWidth: 1.5 }, React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', d: 'M19 9l-7 7-7-7' }));
 
     return React.createElement('div', { className: 'border-b' },
         React.createElement('div', { className: 'p-4 cursor-pointer hover:bg-gray-50', onClick: () => setIsExpanded(!isExpanded) },
@@ -99,11 +98,11 @@ function CartSidebar({ isOpen, onClose, onOrderSuccess }) {
         }
     };
 
-    const EmptyCartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: "h-16 w-16 text-gray-300", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor" }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1", d: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" }));
+    const EmptyCartIcon = () => React.createElement('svg', { xmlns: 'http://www.w3.org/2000/svg', className: "h-16 w-16 text-gray-300", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: 1 }, React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" }));
 
-    return React.createElement('div', { className: `fixed inset-0 z-50 transition-transform transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}` },
-        React.createElement('div', { className: 'absolute inset-0 bg-black bg-opacity-50', onClick: onClose }),
-        React.createElement('div', { className: 'relative w-full max-w-lg ml-auto h-full bg-white shadow-xl flex flex-col' },
+    return React.createElement('div', { className: `fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}` },
+        React.createElement('div', { className: `absolute inset-0 bg-black transition-opacity duration-300 ease-in-out ${isOpen ? 'bg-opacity-50' : 'bg-opacity-0'}`, onClick: onClose }),
+        React.createElement('div', { className: `relative w-full max-w-lg ml-auto h-full bg-white shadow-xl flex flex-col transition-transform duration-300 ease-in-out transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}` },
             React.createElement('div', { className: 'p-4 border-b flex justify-between items-center bg-gray-50' },
                 React.createElement('h2', { className: 'text-xl font-bold text-gray-800' }, 'Your Cart'),
                 React.createElement('button', { onClick: onClose, className: 'text-gray-500 hover:text-gray-800' },

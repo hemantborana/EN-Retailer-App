@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { fetchOrders } from '../services/firebaseService.js';
 import { useAuth } from '../context/AuthContext.js';
@@ -24,8 +23,8 @@ function OrderHistoryModal({ onClose }) {
         loadOrders();
     }, [user]);
 
-    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col', onClick: e => e.stopPropagation() },
+    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
+        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col modal-content-enter', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'p-4 border-b flex justify-between items-center' },
                 React.createElement('h2', { className: 'text-xl font-bold text-gray-900' }, 'Your Order History'),
                 React.createElement('button', { onClick: onClose, className: 'text-gray-500 hover:text-gray-800' },

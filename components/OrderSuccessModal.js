@@ -1,4 +1,3 @@
-
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -88,8 +87,8 @@ function OrderSuccessModal({ order, onClose }) {
         return null;
     };
     
-    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', onClick: onClose },
-        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg text-center p-6', onClick: e => e.stopPropagation() },
+    return React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-backdrop-enter', onClick: onClose },
+        React.createElement('div', { className: 'bg-white rounded-lg shadow-xl w-full max-w-lg text-center p-6 modal-content-enter', onClick: e => e.stopPropagation() },
             React.createElement('div', { className: 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100' },
                 React.createElement('svg', { className: 'h-6 w-6 text-green-600', fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor' },
                     React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: '2', d: 'M5 13l4 4L19 7' })
