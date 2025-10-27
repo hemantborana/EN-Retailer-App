@@ -1,77 +1,111 @@
 
-const CACHE_NAME = 'kambeshwar-agencies-cache-v2';
+const CACHE_NAME = 'aura-cache-v2'; // Bumped version
 const urlsToCache = [
   '/',
   '/index.html',
-  '/index.js',
-  'https://i.ibb.co/zhgM9jrJ/HC-LOGO-Copy-removebg-preview.webp',
-  'https://i.ibb.co/k21PgZ5R/applogo.png'
+  '/manifest.json',
+  '/icons/192x192/icon-192x192.png',
+  '/icons/512x512/icon-512x512.png'
+];
+const API_HOSTS = [
+    'generativelanguage.googleapis.com',
+    'aura-1cc21-default-rtdb.firebaseio.com',
+    'firebase.googleapis.com',
+    'securetoken.googleapis.com',
+    'firestore.googleapis.com',
 ];
 
 self.addEventListener('install', event => {
+  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Service Worker: Caching app shell');
+        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') {
-        return;
-    }
-
-    // Exclude Firebase and API calls from caching to ensure live data
-    if (event.request.url.includes('firebaseio.com') || event.request.url.includes('gstatic.com/firebasejs') || event.request.url.includes('script.google.com')) {
-        return fetch(event.request);
-    }
-
-    event.respondWith(
-        caches.match(event.request)
-        .then(response => {
-            if (response) {
-              return response; // Serve from cache
-            }
-
-            return fetch(event.request).then(
-                response => {
-                    // Check for a valid response to cache
-                    if (!response || response.status !== 200) {
-                        return response;
-                    }
-                    
-                    // Don't cache opaque responses from CDNs to be safe
-                    if(response.type === 'opaque') {
-                        return response;
-                    }
-
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME)
-                        .then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
-                }
-            );
-        })
-    );
-});
-
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+  // Clean up old caches
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Deleting old cache', cacheName);
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('fetch', event => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Don't intercept requests for extensions
+    if (url.protocol === 'chrome-extension:') {
+        return;
+    }
+
+    // API calls: Network only
+    if (API_HOSTS.includes(url.hostname)) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // Navigation requests: Network falling back to cache
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    // Cache the new page
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(request, responseToCache);
+                        });
+                    return response;
+                })
+                .catch(() => {
+                    // If network fails, try the cache
+                    return caches.match(request)
+                        .then(response => response || caches.match('/index.html')); // Fallback to home page
+                })
+        );
+        return;
+    }
+    
+    // Static assets: Cache first, falling back to network
+    event.respondWith(
+        caches.match(request)
+            .then(cachedResponse => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                
+                return fetch(request).then(
+                    networkResponse => {
+                        // Check if we received a valid response
+                        if(!networkResponse || networkResponse.status !== 200) {
+                           return networkResponse;
+                        }
+
+                        const responseToCache = networkResponse.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                // Only cache GET requests
+                                if (request.method === 'GET') {
+                                    cache.put(request, responseToCache);
+                                }
+                            });
+
+                        return networkResponse;
+                    }
+                );
+            })
+    );
 });
