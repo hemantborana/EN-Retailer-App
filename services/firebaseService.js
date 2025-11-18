@@ -38,10 +38,6 @@ export const fetchItems = async () => {
     return fetchDataAsArray('itemData/items');
 };
 
-export const fetchStock = async () => {
-    return fetchDataAsArray('stock');
-};
-
 export const getNextReferenceNumber = async () => {
     const counterRef = ref(database, 'referenceNumbers/counter');
     const transactionResult = await runTransaction(counterRef, (currentData) => {

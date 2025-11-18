@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { fetchItems, fetchStock } from '../services/firebaseService.js';
-import { saveData, loadData as loadDataFromDB } from '../services/indexedDB.js';
+import { fetchItems } from '../services/firebaseService.js';
+import { fetchStockData } from '../services/stockService.js';
+import { saveData, loadData as loadDataFromDB, getMetadata, setMetadata } from '../services/indexedDB.js';
 import { useAuth } from '../context/AuthContext.js';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
@@ -21,7 +22,10 @@ function Dashboard() {
     const { showToast } = useToast();
     const [products, setProducts] = React.useState([]);
     const [stock, setStock] = React.useState({});
+    const [lastStockUpdate, setLastStockUpdate] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
+    const [isSyncing, setIsSyncing] = React.useState(false);
+    const [error, setError] = React.useState('');
     const [selectedProduct, setSelectedProduct] = React.useState(null);
     const [isCartOpen, setCartOpen] = React.useState(false);
     const [isHistoryOpen, setHistoryOpen] = React.useState(false);
@@ -43,9 +47,14 @@ function Dashboard() {
     React.useEffect(() => {
         const processAndSetData = (itemsData, stockData) => {
             const stockMap = stockData.reduce((acc, item) => {
-                if (!item || !item['item name'] || typeof item.color === 'undefined' || typeof item.size === 'undefined') return acc;
-                const key = `${item['item name']}-${item.color}-${item.size}`;
-                acc[key] = item.quantity;
+                if (!item || !item.style || typeof item.color === 'undefined' || typeof item.size === 'undefined') return acc;
+                const style = String(item.style).trim();
+                const color = String(item.color).trim();
+                const size = String(item.size).trim();
+
+                const key = `${style}-${color}-${size}`;
+                const quantity = parseFloat(item.stock || 0);
+                acc[key] = isNaN(quantity) ? 0 : quantity;
                 return acc;
             }, {});
 
@@ -106,40 +115,68 @@ function Dashboard() {
             setCategories(['all', ...allCategories.sort()]);
         };
 
-        const loadInitialData = async () => {
+        const syncData = async () => {
             setLoading(true);
+            setIsSyncing(false);
+            setError('');
+            let localDataLoaded = false;
+            
             try {
-                const [cachedItems, cachedStock] = await Promise.all([
-                    loadDataFromDB('products'), loadDataFromDB('stock')
+                // Step 1: Attempt to load from IndexedDB first
+                const [cachedItems, cachedStock, stockMeta] = await Promise.all([
+                    loadDataFromDB('products'),
+                    loadDataFromDB('stock'),
+                    getMetadata('stock_metadata')
                 ]);
                 
-                if (cachedItems && cachedStock) {
+                if (cachedItems && cachedStock && Array.isArray(cachedItems) && cachedItems.length > 0) {
                     processAndSetData(cachedItems, cachedStock);
+                    if (stockMeta) setLastStockUpdate(stockMeta.timestamp);
                     setLoading(false);
+                    localDataLoaded = true;
                 }
 
-                const [itemsData, stockData] = await Promise.all([
-                    fetchItems(), fetchStock()
+                // Step 2: Start background sync
+                setIsSyncing(true);
+                const [itemsData, stockResponse] = await Promise.all([
+                    fetchItems(),
+                    fetchStockData()
                 ]);
                 
-                const hasChanges = JSON.stringify(cachedItems) !== JSON.stringify(itemsData) ||
-                                   JSON.stringify(cachedStock) !== JSON.stringify(stockData);
-                
-                if (hasChanges || !cachedItems || !cachedStock) {
-                    processAndSetData(itemsData, stockData);
+                const remoteStockData = stockResponse.data;
+                const remoteStockTimestamp = stockResponse.timestamp;
+                const localStockTimestamp = stockMeta ? stockMeta.timestamp : null;
+
+                const hasItemChanges = !localDataLoaded || JSON.stringify(cachedItems) !== JSON.stringify(itemsData);
+                const hasStockChanges = !localStockTimestamp || remoteStockTimestamp > localStockTimestamp;
+
+                if (hasItemChanges || hasStockChanges) {
+                    processAndSetData(itemsData, remoteStockData);
                     await Promise.all([
-                        saveData('products', itemsData), saveData('stock', stockData)
+                        saveData('products', itemsData),
+                        saveData('stock', remoteStockData),
+                        setMetadata('stock_metadata', { timestamp: remoteStockTimestamp })
                     ]);
+                    setLastStockUpdate(remoteStockTimestamp);
+                    
+                    if (localDataLoaded) {
+                        showToast('Data synced successfully.', 'success');
+                    }
                 }
-            } catch (error) {
-                console.error("Failed to load data:", error);
-                showToast("Error loading data. Please refresh.", "error");
+            } catch (err) {
+                console.error("Data sync error:", err);
+                if (localDataLoaded) {
+                    showToast('Could not sync latest data.', 'error');
+                } else {
+                    setError('Could not load data. Please check your connection and try again.');
+                }
             } finally {
-                if (loading) setLoading(false);
+                setLoading(false);
+                setIsSyncing(false);
             }
         };
 
-        loadInitialData();
+        syncData();
     }, [showToast]);
 
     const handleSearch = () => {
@@ -239,7 +276,11 @@ function Dashboard() {
             React.createElement('div', { className: 'flex items-center space-x-2 sm:space-x-4' },
                 React.createElement('div', { className: 'hidden sm:block text-right' },
                     React.createElement('p', { className: 'text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[150px]', title: user.name }, user.name),
-                    React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Retailer Portal')
+                    isSyncing ?
+                        React.createElement('p', { className: 'text-xs text-pink-500 dark:text-pink-400 flex items-center justify-end animate-pulse' },
+                            React.createElement('span', { className: 'spinner h-3 w-3 mr-1 border-2' }), 'Syncing...'
+                        ) :
+                        React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400' }, 'Retailer Portal')
                 ),
                  React.createElement('button', { onClick: () => setMobileSearchOpen(!isMobileSearchOpen), className: 'md:hidden p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-pink-600 transition-colors', title: 'Search' },
                     React.createElement(SearchIcon, { className: 'h-6 w-6' })
@@ -277,6 +318,10 @@ function Dashboard() {
             loading ?
                 React.createElement('div', { className: 'flex justify-center items-center h-64' },
                     React.createElement('div', { className: 'spinner h-12 w-12 border-4 border-pink-500 border-t-transparent rounded-full' })
+                ) :
+            error ?
+                React.createElement('div', { className: 'text-center py-10' },
+                    React.createElement('p', { className: 'text-red-500 dark:text-red-400' }, error)
                 ) :
                 React.createElement(React.Fragment, null,
                     paginatedProducts.length === 0 ? 
@@ -336,7 +381,7 @@ function Dashboard() {
             )
         ),
         
-        selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null) }),
+        selectedProduct && React.createElement(ProductDetailModal, { product: selectedProduct, stock: stock, onClose: () => setSelectedProduct(null), lastStockUpdate: lastStockUpdate }),
         React.createElement(CartSidebar, { isOpen: isCartOpen, onClose: () => setCartOpen(false), onOrderSuccess: setSuccessfulOrder }),
         isHistoryOpen && React.createElement(OrderHistoryModal, { onClose: () => setHistoryOpen(false) }),
         successfulOrder && React.createElement(OrderSuccessModal, { order: successfulOrder, onClose: () => setSuccessfulOrder(null) }),

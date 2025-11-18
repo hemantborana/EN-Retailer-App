@@ -1,6 +1,6 @@
 const DB_NAME = 'KambeshwarDB';
-const DB_VERSION = 1;
-const STORES = ['products', 'stock'];
+const DB_VERSION = 2; // Incremented version to add metadata store
+const STORES = ['products', 'stock', 'metadata'];
 
 let db;
 
@@ -54,5 +54,29 @@ export const loadData = async (storeName) => {
             resolve(event.target.result ? event.target.result.data : null);
         };
         request.onerror = (event) => reject(event.target.error);
+    });
+};
+
+export const getMetadata = async (id) => {
+    const dbInstance = await openDB();
+    const transaction = dbInstance.transaction(['metadata'], 'readonly');
+    const store = transaction.objectStore('metadata');
+    const request = store.get(id);
+    return new Promise((resolve, reject) => {
+        request.onsuccess = (event) => {
+            resolve(event.target.result || null);
+        };
+        request.onerror = (event) => reject(event.target.error);
+    });
+};
+
+export const setMetadata = async (id, data) => {
+    const dbInstance = await openDB();
+    const transaction = dbInstance.transaction(['metadata'], 'readwrite');
+    const store = transaction.objectStore('metadata');
+    store.put({ id, ...data });
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = (event) => reject(event.target.error);
     });
 };

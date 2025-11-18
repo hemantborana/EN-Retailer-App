@@ -2,9 +2,9 @@
 import React from 'react';
 import { useCart } from '../context/CartContext.js';
 import { useToast } from '../context/ToastContext.js';
-import { getStyleForColor } from '../types.js';
+import { getStyleForColor, formatTimestamp } from '../types.js';
 
-function ProductDetailModal({ product, stock, onClose }) {
+function ProductDetailModal({ product, stock, onClose, lastStockUpdate }) {
     const { addToCart } = useCart();
     const { showToast } = useToast();
     const [quantities, setQuantities] = React.useState({});
@@ -72,7 +72,10 @@ function ProductDetailModal({ product, stock, onClose }) {
             React.createElement('div', { className: 'flex-grow overflow-y-auto p-4' },
                 React.createElement('div', { className: 'text-gray-800 dark:text-gray-200' },
                     React.createElement('p', { className: 'font-semibold' }, `Color: ${selectedColor.name}`),
-                    React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, '*Stock levels are an estimate. You may order more than the available quantity.')
+                    React.createElement('div', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1' },
+                        lastStockUpdate && React.createElement('p', null, `Stock last updated: ${formatTimestamp(lastStockUpdate)}`),
+                        React.createElement('p', null, '*Stock levels are an estimate. You may order more than the available quantity.')
+                    )
                 ),
                 React.createElement('table', { className: 'w-full mt-4 text-sm text-left text-gray-800 dark:text-gray-200' },
                     React.createElement('thead', null,
@@ -85,13 +88,17 @@ function ProductDetailModal({ product, stock, onClose }) {
                     ),
                     React.createElement('tbody', null,
                         variantsForColor.map(variant => {
-                            const stockKey = `${product.style}-${variant.color}-${variant.size}`;
+                            const style = String(product.style).trim();
+                            const color = String(variant.color).trim();
+                            const size = String(variant.size).trim();
+                            const stockKey = `${style}-${color}-${size}`;
                             const availableStock = stock[stockKey] || 0;
+                            const displayStock = Math.floor(availableStock);
                             const currentQuantity = Number(quantities[variant.barcode] || 0);
                             return React.createElement('tr', { key: variant.barcode, className: 'border-b dark:border-gray-700' },
                                 React.createElement('td', { className: 'p-2' }, variant.size),
                                 React.createElement('td', { className: 'p-2' }, `₹${variant.mrp.toFixed(2)}`),
-                                React.createElement('td', { className: 'p-2' }, availableStock),
+                                React.createElement('td', { className: 'p-2' }, displayStock),
                                 React.createElement('td', { className: 'p-2' },
                                     React.createElement('div', { className: 'flex items-center w-32' },
                                         React.createElement('button', {

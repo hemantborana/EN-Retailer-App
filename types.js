@@ -67,3 +67,36 @@ export const getStyleForColor = (colorCode) => {
     
     return { style, isDefault: false };
 };
+
+export const formatTimestamp = (ts) => {
+    if (!ts) return 'N/A';
+    try {
+        const date = new Date(ts);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', hour12: true
+            });
+        }
+
+        // Fallback for custom format like YYYYMMDD_HHMMSS
+        const cleanedTs = String(ts).replace(/[^0-9]/g, '');
+        if (cleanedTs.length >= 12) {
+            const year = cleanedTs.substring(0, 4);
+            const month = parseInt(cleanedTs.substring(4, 6), 10) - 1;
+            const day = cleanedTs.substring(6, 8);
+            const hour = cleanedTs.substring(8, 10);
+            const minute = cleanedTs.substring(10, 12);
+            const parsedDate = new Date(year, month, day, hour, minute);
+            if (!isNaN(parsedDate.getTime())) {
+                return parsedDate.toLocaleString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: 'numeric', minute: '2-digit', hour12: true
+                });
+            }
+        }
+        return 'Invalid Date';
+    } catch {
+        return 'Invalid Date';
+    }
+};
