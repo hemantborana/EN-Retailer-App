@@ -71,27 +71,39 @@ export const fetchOrders = async (retailerId) => {
 };
 
 export const fetchFullOrderHistory = async (retailerId) => {
+    // 1. Get all POs submitted by this retailer, which is our starting point.
     const unapprovedOrders = await fetchOrders(retailerId);
 
-    const pendingRef = ref(database, 'orders');
-    const billingRef = ref(database, 'billingOrders');
-    const sentRef = ref(database, 'sentOrders');
-
-    const [pendingSnapshot, billingSnapshot, sentSnapshot] = await Promise.all([
-        get(pendingRef),
-        get(billingRef),
-        get(sentRef)
+    // 2. Fetch all possible subsequent order states from the new V2 paths.
+    const [
+        pendingSnapshot,
+        billingSnapshot,
+        billedSnapshot,
+        deletedSnapshot,
+        expiredSnapshot
+    ] = await Promise.all([
+        get(ref(database, 'Pending_Order_V2')),
+        get(ref(database, 'Ready_For_Billing_V2')),
+        get(ref(database, 'Billed_Orders_V2')),
+        get(ref(database, 'Deleted_Orders_V2')),
+        get(ref(database, 'Expired_Orders_V2'))
     ]);
 
+    // 3. Convert snapshots to value objects for easier processing in the component.
     const pendingData = pendingSnapshot.exists() ? pendingSnapshot.val() : {};
     const billingData = billingSnapshot.exists() ? billingSnapshot.val() : {};
-    const sentData = sentSnapshot.exists() ? Object.values(sentSnapshot.val()) : [];
+    const billedData = billedSnapshot.exists() ? billedSnapshot.val() : {};
+    const deletedData = deletedSnapshot.exists() ? deletedSnapshot.val() : {};
+    const expiredData = expiredSnapshot.exists() ? expiredSnapshot.val() : {};
 
+    // 4. Return all data to the component for client-side linking and processing.
     return {
         unapproved: unapprovedOrders,
         pending: pendingData,
         billing: billingData,
-        sent: sentData,
+        billed: billedData,
+        deleted: deletedData,
+        expired: expiredData,
     };
 };
 
