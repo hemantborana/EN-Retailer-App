@@ -1,41 +1,53 @@
-
 import React from 'react';
 import { fetchFullOrderHistory } from '../services/firebaseService.js';
 import { useAuth } from '../context/AuthContext.js';
+import { formatTimestamp } from '../types.js';
 
-const flattenItems = (items) => {
-    if (!items) return [];
-    const flatList = [];
-    items.forEach(style => {
-        const styleName = style.name;
-        Object.keys(style.colors).forEach(colorName => {
-            Object.keys(style.colors[colorName]).forEach(size => {
-                flatList.push({
-                    name: styleName,
-                    color: colorName,
-                    size: size,
-                    quantity: style.colors[colorName][size]
-                });
-            });
-        });
-    });
-    return flatList;
+const HistoryLog = ({ history }) => {
+    if (!history || history.length === 0) return null;
+    return React.createElement('div', { className: 'mt-4' },
+        React.createElement('h4', { className: 'font-semibold text-gray-700 dark:text-gray-300 mb-1' }, 'Order History'),
+        React.createElement('div', { className: 'border dark:border-gray-600 rounded-md p-2 space-y-2 bg-gray-50 dark:bg-gray-700/50 max-h-40 overflow-y-auto' },
+            history.slice().sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).map((entry, index) => React.createElement('div', { key: index, className: 'text-xs' },
+                React.createElement('p', { className: 'font-semibold text-gray-800 dark:text-gray-200' }, `[${formatTimestamp(entry.timestamp)}] - ${entry.event}`),
+                React.createElement('p', { className: 'text-gray-600 dark:text-gray-400 pl-2' }, entry.details)
+            ))
+        )
+    );
 };
 
-const ItemList = ({ title, items }) => {
+const Tags = ({ tags }) => {
+    if (!tags || tags.length === 0) return null;
+    return React.createElement('div', { className: 'mt-4' },
+        React.createElement('h4', { className: 'font-semibold text-gray-700 dark:text-gray-300 mb-1' }, 'Tags'),
+        React.createElement('div', { className: 'flex flex-wrap gap-2' },
+            tags.map(tag => React.createElement('span', { key: tag, className: 'px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 rounded-full' }, tag))
+        )
+    );
+};
+
+const ItemList = ({ title, items, isV2 = false }) => {
     if (!items || items.length === 0) {
         return React.createElement('div', { className: 'mt-4' },
             React.createElement('h4', { className: 'font-semibold text-gray-700 dark:text-gray-300' }, title),
-            React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400 italic' }, 'No items in this category.')
+            React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400 italic' }, 'No items recorded for this stage.')
         );
     }
 
     const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const renderItem = (item, index) => {
-        const style = item.style || item.name;
-        return React.createElement('div', { key: item.barcode || `${style}-${item.size}-${item.color}-${index}`, className: 'flex justify-between items-center text-sm py-1' },
-            React.createElement('span', { className: 'text-gray-800 dark:text-gray-200 truncate pr-2' }, `${style} (${item.size}, ${item.color})`),
+
+    const renderV2Item = (item, index) => {
+        const data = item.fullItemData || {};
+        return React.createElement('div', { key: item.id || index, className: 'flex justify-between items-center text-sm py-1' },
+            React.createElement('span', { className: 'text-gray-800 dark:text-gray-200 truncate pr-2' }, `${data.Style || 'N/A'} (${data.Size || 'N/A'}, ${data.Color || 'N/A'})`),
             React.createElement('span', { className: 'font-medium text-gray-600 dark:text-gray-300 flex-shrink-0' }, `Qty: ${item.quantity}`)
+        );
+    };
+
+    const renderV1Item = (item, index) => {
+        return React.createElement('div', { key: item.barcode || index, className: 'flex justify-between items-center text-sm py-1' },
+             React.createElement('span', { className: 'text-gray-800 dark:text-gray-200 truncate pr-2' }, `${item.style} (${item.size}, ${item.color})`),
+             React.createElement('span', { className: 'font-medium text-gray-600 dark:text-gray-300 flex-shrink-0' }, `Qty: ${item.quantity}`)
         );
     };
 
@@ -45,14 +57,17 @@ const ItemList = ({ title, items }) => {
             React.createElement('span', { className: 'text-sm font-bold text-gray-600 dark:text-gray-300' }, `Total: ${totalQuantity}`)
         ),
         React.createElement('div', { className: 'mt-1 p-2 border dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700/50 max-h-40 overflow-y-auto' },
-            items.map(renderItem)
+            items.map(isV2 ? renderV2Item : renderV1Item)
         )
     );
 };
 
 function OrderHistoryItem({ order }) {
     const [isExpanded, setIsExpanded] = React.useState(false);
-    const { originalOrder, pendingData, billingData, sentData, status, statusColor } = order;
+    const { originalOrder, linkedOrderData, status, statusColor } = order;
+    
+    const finalLinkedOrder = linkedOrderData ? linkedOrderData.finalOrder : null;
+    const internalOrderNumber = finalLinkedOrder ? finalLinkedOrder.orderNumber : null;
 
     const statusClasses = {
         yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200',
@@ -62,44 +77,42 @@ function OrderHistoryItem({ order }) {
         indigo: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200',
         gray: 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-300',
     };
-    
-    const showProcessingDetails = status !== 'Approval Pending' && status !== 'Rejected';
-    
-    const sentItems = showProcessingDetails ? sentData.flatMap(s => s.billedItems || []) : [];
-    const billingItems = showProcessingDetails ? flattenItems(billingData?.items) : [];
-    const pendingItems = showProcessingDetails ? flattenItems(pendingData?.items) : [];
 
     return React.createElement('div', { className: 'border dark:border-gray-700 rounded-lg overflow-hidden transition-shadow hover:shadow-md' },
         React.createElement('div', { className: 'p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50', onClick: () => setIsExpanded(!isExpanded) },
-            React.createElement('div', { className: 'flex justify-between items-center' },
-                React.createElement('div', null,
-                    React.createElement('p', { className: 'font-bold text-lg text-gray-800 dark:text-gray-100' }, `Reference #${originalOrder.referenceNumber}`),
-                    React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, new Date(originalOrder.dateTime).toLocaleString())
+            React.createElement('div', { className: 'flex justify-between items-start' },
+                React.createElement('div', { className: 'flex-1' },
+                    React.createElement('p', { className: 'font-bold text-lg text-gray-800 dark:text-gray-100' }, `PO Reference #${originalOrder.referenceNumber}`),
+                    internalOrderNumber && React.createElement('p', { className: 'text-xs text-gray-500 dark:text-gray-400 mt-1' }, `Internal Order: ${internalOrderNumber}`),
+                    React.createElement('p', { className: 'text-sm text-gray-500 dark:text-gray-400' }, formatTimestamp(originalOrder.dateTime))
                 ),
-                React.createElement('div', { className: 'flex flex-col items-end' },
+                React.createElement('div', { className: 'flex flex-col items-end flex-shrink-0 ml-2' },
                     React.createElement('span', { className: `px-3 py-1 text-xs font-semibold rounded-full ${statusClasses[statusColor]}` }, status),
                     React.createElement('p', { className: 'text-sm text-gray-600 dark:text-gray-300 mt-1' }, `Total Qty: ${originalOrder.totalQuantity}`)
                 )
             )
         ),
         isExpanded && React.createElement('div', { className: 'p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800' },
-            React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4' },
-                originalOrder.approvedby && React.createElement('div', null,
-                    React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Processed by'),
-                    React.createElement('p', { className: 'text-gray-800 dark:text-gray-200' }, `${originalOrder.approvedby} on ${new Date(originalOrder.ardate).toLocaleDateString()}`)
-                ),
-                originalOrder.orderNote && React.createElement('div', { className: 'md:col-span-2' },
-                    React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Retailer Note'),
-                    React.createElement('p', { className: 'text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md' }, originalOrder.orderNote)
-                )
+            (status === 'Deleted' || status === 'Expired') && finalLinkedOrder && React.createElement('div', { className: 'mb-4 p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/30' },
+                React.createElement('h4', { className: 'font-semibold text-yellow-800 dark:text-yellow-200' }, `Reason for ${status} Status`),
+                React.createElement('p', { className: 'text-sm text-yellow-700 dark:text-yellow-300 mt-1' }, finalLinkedOrder.deletionReason || finalLinkedOrder.expirationReason)
             ),
-            
-            showProcessingDetails && React.createElement(React.Fragment, null,
-                React.createElement(ItemList, { title: '✅ Billed Items', items: sentItems }),
-                React.createElement(ItemList, { title: '⏳ Processing Items', items: billingItems }),
-                React.createElement(ItemList, { title: '📋 Pending Items', items: pendingItems })
+            originalOrder.approvedby && React.createElement('div', { className: 'mb-4 text-sm' },
+                 React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Processed by'),
+                 React.createElement('p', { className: 'text-gray-800 dark:text-gray-200' }, `${originalOrder.approvedby} on ${formatTimestamp(originalOrder.ardate)}`)
             ),
-            React.createElement(ItemList, { title: '📦 Original Order Details', items: originalOrder.lineItems })
+            originalOrder.orderNote && React.createElement('div', { className: 'mb-4 text-sm' },
+                React.createElement('p', { className: 'font-semibold text-gray-600 dark:text-gray-400' }, 'Retailer Note'),
+                React.createElement('p', { className: 'text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md' }, originalOrder.orderNote)
+            ),
+            finalLinkedOrder && React.createElement(Tags, { tags: finalLinkedOrder.tags }),
+            finalLinkedOrder && React.createElement(HistoryLog, { history: finalLinkedOrder.history }),
+
+            linkedOrderData && linkedOrderData.pending && React.createElement(ItemList, { title: 'Unprocessed Items (Pending)', items: linkedOrderData.pending.items, isV2: true }),
+            linkedOrderData && linkedOrderData.billing && React.createElement(ItemList, { title: 'Under Process Items (Ready for Billing)', items: linkedOrderData.billing.items, isV2: true }),
+            linkedOrderData && linkedOrderData.billed && React.createElement(ItemList, { title: 'Processed Items (Billed)', items: linkedOrderData.billed.items, isV2: true }),
+
+            React.createElement(ItemList, { title: 'Original Purchase Order Items', items: originalOrder.lineItems })
         )
     );
 }
@@ -114,23 +127,37 @@ function OrderHistoryModal({ onClose }) {
         const loadOrders = async () => {
             if (!user) return;
             try {
-                const { unapproved, pending, billing, sent } = await fetchFullOrderHistory(user.id);
+                const allData = await fetchFullOrderHistory(user.id);
+                const { unapproved, pending, billing, billed, deleted, expired } = allData;
 
-                const sentByOrderNumber = sent.reduce((acc, sentItem) => {
-                    const orderNum = sentItem.orderNumber;
-                    if (!acc[orderNum]) acc[orderNum] = [];
-                    acc[orderNum].push(sentItem);
-                    return acc;
-                }, {});
+                const pendingMap = new Map(Object.values(pending).map(o => [o.orderNumber, o]));
+                const billingMap = new Map(Object.values(billing).map(o => [o.orderNumber, o]));
+                const billedMap = new Map(Object.values(billed).map(o => [o.orderNumber, o]));
+                const deletedMap = new Map(Object.values(deleted).map(o => [o.orderNumber, o]));
+                const expiredMap = new Map(Object.values(expired).map(o => [o.orderNumber, o]));
+
+                const findInitialV2Order = (poReference) => {
+                    const searchString = `PO #${poReference}`;
+                    for (const v2Order of Object.values(pending)) {
+                        if (v2Order.history && Array.isArray(v2Order.history) && v2Order.history.some(h => h.details && h.details.includes(searchString))) {
+                            return v2Order;
+                        }
+                    }
+                    return null;
+                };
 
                 const processedOrders = unapproved.map(originalOrder => {
                     const refNum = originalOrder.referenceNumber;
-                    const pendingData = pending[refNum];
-                    const billingData = billing[refNum];
-                    const sentData = sentByOrderNumber[refNum] || [];
-
                     let status = 'Unknown';
                     let statusColor = 'gray';
+                    let linkedOrderData = {
+                        pending: null,
+                        billing: null,
+                        billed: null,
+                        deleted: null,
+                        expired: null,
+                        finalOrder: null,
+                    };
 
                     if (originalOrder.status === 'Approval Pending') {
                         status = 'Approval Pending';
@@ -139,20 +166,52 @@ function OrderHistoryModal({ onClose }) {
                         status = 'Rejected';
                         statusColor = 'red';
                     } else if (originalOrder.status === 'Approved') {
-                        const totalSentQty = sentData.reduce((sum, s) =>
-                            sum + (s.billedItems || []).reduce((isum, i) => isum + i.quantity, 0), 0);
+                        const initialV2Order = findInitialV2Order(refNum);
+                        
+                        if (initialV2Order) {
+                            const internalOrderNumber = initialV2Order.orderNumber;
 
-                        if (totalSentQty >= originalOrder.totalQuantity) {
-                            status = 'Completed';
-                            statusColor = 'green';
-                        } else if (totalSentQty > 0) {
-                            status = 'Partially Fulfilled';
-                            statusColor = 'blue';
-                        } else if (!pendingData && !billingData) {
-                            status = 'Expired';
-                            statusColor = 'gray';
-                        } else {
-                            status = 'Processing';
+                            if (pendingMap.has(internalOrderNumber)) {
+                                linkedOrderData.pending = pendingMap.get(internalOrderNumber);
+                            }
+                            if (billingMap.has(internalOrderNumber)) {
+                                linkedOrderData.billing = billingMap.get(internalOrderNumber);
+                            }
+                            if (billedMap.has(internalOrderNumber)) {
+                                linkedOrderData.billed = billedMap.get(internalOrderNumber);
+                            }
+                            if (deletedMap.has(internalOrderNumber)) {
+                                linkedOrderData.deleted = deletedMap.get(internalOrderNumber);
+                            }
+                            if (expiredMap.has(internalOrderNumber)) {
+                                linkedOrderData.expired = expiredMap.get(internalOrderNumber);
+                            }
+                            
+                            if (linkedOrderData.billed) {
+                                status = 'Billed';
+                                statusColor = 'green';
+                                linkedOrderData.finalOrder = linkedOrderData.billed;
+                            } else if (linkedOrderData.billing) {
+                                status = 'Processing';
+                                statusColor = 'blue';
+                                linkedOrderData.finalOrder = linkedOrderData.billing;
+                            } else if (linkedOrderData.deleted) {
+                                status = 'Deleted';
+                                statusColor = 'gray';
+                                linkedOrderData.finalOrder = linkedOrderData.deleted;
+                            } else if (linkedOrderData.expired) {
+                                status = 'Expired';
+                                statusColor = 'gray';
+                                linkedOrderData.finalOrder = linkedOrderData.expired;
+                            } else if (linkedOrderData.pending) {
+                                status = 'Pending';
+                                statusColor = 'indigo';
+                                linkedOrderData.finalOrder = linkedOrderData.pending;
+                            }
+                        }
+                        
+                        if (!linkedOrderData.finalOrder) {
+                            status = 'Approved';
                             statusColor = 'indigo';
                         }
                     }
@@ -160,9 +219,7 @@ function OrderHistoryModal({ onClose }) {
                     return {
                         id: refNum,
                         originalOrder,
-                        pendingData,
-                        billingData,
-                        sentData,
+                        linkedOrderData,
                         status,
                         statusColor
                     };
